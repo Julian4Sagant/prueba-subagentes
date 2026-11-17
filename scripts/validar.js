@@ -201,6 +201,29 @@ function validarCarriles() {
 	}
 }
 
+// Cada comando tiene description en el frontmatter y usa $ARGUMENTS; /pedido además manda a
+// seguir ORQUESTACION.md, que es para lo que existe.
+function validarComandos() {
+	const carpeta = path.join(raiz, 'commands');
+	const comandos = fs.existsSync(carpeta) ? fs.readdirSync(carpeta).filter(f => f.endsWith('.md')) : [];
+	if (!comandos.includes('pedido.md')) {
+		problemas.push('commands/pedido.md: falta');
+	}
+	for (const archivo of comandos) {
+		const texto = leer(`commands/${archivo}`);
+		const fm = /^---\n([\s\S]*?)\n---\n/.exec(texto);
+		if (!fm || !campo(fm[1], 'description')) {
+			problemas.push(`commands/${archivo}: falta description en el frontmatter`);
+		}
+		if (!texto.includes('$ARGUMENTS')) {
+			problemas.push(`commands/${archivo}: no usa $ARGUMENTS`);
+		}
+	}
+	if (comandos.includes('pedido.md') && !leer('commands/pedido.md').includes('ORQUESTACION.md')) {
+		problemas.push('commands/pedido.md: no manda a seguir ORQUESTACION.md');
+	}
+}
+
 const carpetaAgentes = path.join(raiz, 'agents');
 const agentes = fs.readdirSync(carpetaAgentes).filter(f => f.endsWith('.md'));
 agentes.forEach(f => validarAgente(path.join(carpetaAgentes, f)));
@@ -216,6 +239,7 @@ if (!fs.existsSync(path.join(raiz, 'ORQUESTACION.md'))) {
 	problemas.push('ORQUESTACION.md: falta');
 }
 validarCarriles();
+validarComandos();
 
 if (problemas.length) {
 	console.error(problemas.map(p => `- ${p}`).join('\n'));

@@ -100,7 +100,7 @@ paso('openspec init --tools claude', () => {
 
 paso('el instalador copia todo y lista lo pendiente', () => {
 	const salida = instalar();
-	for (const archivo of ['.claude/agents/explorador.md', '.claude/hooks/sin-escritura.js', 'openspec/schemas/spec-driven-agentes/schema.yaml', 'ORQUESTACION.md', 'CARRILES.md']) {
+	for (const archivo of ['.claude/agents/explorador.md', '.claude/hooks/sin-escritura.js', '.claude/commands/pedido.md', 'openspec/schemas/spec-driven-agentes/schema.yaml', 'ORQUESTACION.md', 'CARRILES.md']) {
 		if (!fs.existsSync(path.join(proyecto, archivo))) {
 			throw new Error(`no copió ${archivo}`);
 		}

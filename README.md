@@ -63,7 +63,7 @@ powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Proyecto C:\ruta\a
 ```
 
 El instalador copia:
-- `agents/` y `hooks/` a `.claude/`.
+- `agents/`, `hooks/` y `commands/` a `.claude/`.
 - El schema a `openspec/schemas/`.
 - `ORQUESTACION.md` y `CARRILES.md` a la raíz del proyecto.
 
@@ -75,12 +75,13 @@ Las reglas del proyecto (stack, formato de errores, qué es BREAKING) van en el 
 
 ## Uso
 
-Con todo instalado, en la sesión principal del proyecto:
+Con todo instalado, en una sesión nueva de Claude Code en el proyecto:
 
 ```text
-Pedido nuevo, seguí ORQUESTACION.md:
-<pegá el ticket o describí el cambio>
+/pedido <pegá el ticket o describí el cambio>
 ```
+
+Por ejemplo, `/pedido Al dar de alta un cliente, recortar los espacios del nombre.` El pedido puede ocupar varias líneas. El comando (`commands/pedido.md`) le pasa el texto tal cual a la sesión y le indica que siga `ORQUESTACION.md` desde el principio, sin que tengas que escribirlo. También separa un pedido nuevo de las respuestas que das en los gates.
 
 El orquestador corre el explorador, decide el carril y frena en cada gate. Para aprobar, respondé "aprobada". Para rechazar, escribí qué hay que cambiar. Al terminar, te dice cómo seguir con el apply.
 
@@ -108,6 +109,7 @@ CI corre todo en cada push y PR, con la versión de OpenSpec registrada en `skil
 agents/        los cuatro agentes (fuente de verdad)
 schemas/       el schema spec-driven-agentes, con sus templates
 hooks/         sin-escritura.js: bloquea los comandos de git que cambian el repo
+commands/      /pedido: arranca el flujo con un pedido nuevo
 ORQUESTACION.md  el guion que sigue la sesión principal
 CARRILES.md    carriles, señales, reglas y qué corre cada carril
 scripts/       instalador, validador, verificación de las skills, tests del hook y prueba de humo

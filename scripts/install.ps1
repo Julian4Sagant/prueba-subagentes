@@ -17,13 +17,14 @@ if (-not (Test-Path (Join-Path $Proyecto 'openspec') -PathType Container)) {
 $raiz = Split-Path -Parent $PSScriptRoot
 $claude = Join-Path $Proyecto '.claude'
 $schemas = Join-Path $Proyecto 'openspec/schemas'
-New-Item -ItemType Directory -Force -Path (Join-Path $claude 'agents'), (Join-Path $claude 'hooks'), $schemas | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $claude 'agents'), (Join-Path $claude 'hooks'), (Join-Path $claude 'commands'), $schemas | Out-Null
 
 Copy-Item (Join-Path $raiz 'agents/*.md') (Join-Path $claude 'agents') -Force
 Copy-Item (Join-Path $raiz 'hooks/*.js') (Join-Path $claude 'hooks') -Force
+Copy-Item (Join-Path $raiz 'commands/*.md') (Join-Path $claude 'commands') -Force
 Copy-Item (Join-Path $raiz 'schemas/*') $schemas -Recurse -Force
 Copy-Item (Join-Path $raiz 'ORQUESTACION.md'), (Join-Path $raiz 'CARRILES.md') $Proyecto -Force
-Write-Host "Agentes, hook, schema, ORQUESTACION.md y CARRILES.md instalados en $Proyecto"
+Write-Host "Agentes, hook, comando /pedido, schema, ORQUESTACION.md y CARRILES.md instalados en $Proyecto"
 
 # Lo que el instalador no hace por su cuenta.
 $pendientes = @()
