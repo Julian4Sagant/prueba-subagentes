@@ -110,6 +110,14 @@ tests de los Scenarios desde la spec. Escribilas para eso:
 - **Tests de Scenarios:** no los pongas como tareas de implementación; los
   escribe el tester a partir de la spec. Sí van los tests unitarios que
   necesite una pieza interna.
+- **Tests que ya existen y el change invalida:** si el change modifica
+  Scenarios que ya tienen test (por ejemplo, los tests de caracterización de
+  un baseline), esos tests van a dar rojo hasta que se reescriban. Listalos
+  en el grupo que los afecta, con el nombre del Scenario y quién los
+  reescribe (el tester, desde la spec nueva), y decí que la verificación
+  global del grupo corre después de esa reescritura. Ninguna tarea se puede
+  verificar con un test que todavía no existe sin decir quién lo escribe y
+  cuándo.
 - **Cobertura:** cada Requirement `ADDED` o `MODIFIED` de la spec tiene al
   menos una tarea que lo implementa. Decilo en la tarea ("cubre: Alta de
   cliente").
@@ -195,8 +203,10 @@ leer. Es una escalada: va con `requiereHumano: true` y el error concreto.
 
 ## Bloque de salida (siempre, al final)
 
-Lo último de tu respuesta es exactamente un bloque JSON, sin texto después.
-El orquestador lo lee para verificar y decidir el paso siguiente.
+Lo último de tu respuesta es exactamente un bloque JSON, sin texto después,
+**siempre**, aunque el reporte sea corto o ya hayas explicado todo arriba:
+sin el bloque, el orquestador no puede verificar tu trabajo y te lo vuelve a
+pedir.
 
 Plan escrito:
 

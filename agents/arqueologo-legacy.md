@@ -56,8 +56,10 @@ una persona en tu conversación: donde una skill dice preguntar, confirmar o
 esperar al usuario, aplicás las reglas de este prompt y seguís.
 
 **Ronda 1: skill `openspec-propose`**, con estas adaptaciones:
-- **Paso 1:** el nombre es `baseline-<capability>` y el alcance sale del
-  `impacto.md` del change funcional. No preguntes nada.
+- **Paso 1:** el nombre es `baseline-<capability>`, con la `capability` que
+  te pasa el orquestador, y el alcance sale del `impacto.md` del change
+  funcional. No preguntes nada. Fijá el nombre antes de crear nada: no crees
+  un change de prueba ni con otro nombre.
 - **Pasos 3 y 4:** el baseline usa el schema **`spec-driven`**, no el del
   proyecto, porque no tiene impacto ni pasa por el explorador:
   `openspec new change "baseline-<capability>" --schema spec-driven`.
@@ -89,6 +91,16 @@ Fuentes de comportamiento que no se te pueden escapar: validaciones y guardas
 que cortan el flujo, cambios de estado, cálculos, chequeos de permisos,
 restricciones de la base, eventos y efectos posteriores, y compensaciones
 cuando algo falla a mitad de camino.
+
+**Las entradas que el change va a tocar, caracterizadas completas.** Para cada
+campo de entrada que el pedido va a cambiar, documentá qué responde hoy cada
+clase de valor: ausente, `null`, vacío, blancos que no son `U+0020`, otro tipo
+JSON (texto, número, booleano, objeto, array), y los bordes de rango y formato
+(por ejemplo, `0`, un negativo, un decimal, un número como texto). Con eso el
+spec-writer puede declarar con precisión qué rompe el change. Agrupá en un
+solo Scenario las clases que responden exactamente igual, nombrándolas a
+todas. Los límites del lector JSON (cuerpo malformado, números enormes,
+claves repetidas) no entran: el change no los toca.
 
 ## Qué hacés
 
@@ -141,7 +153,9 @@ cuando algo falla a mitad de camino.
   describe el propósito general ("El sistema SHALL calcular el total de la
   factura"). El comportamiento raro va solo en el THEN del Scenario que lo
   muestra, con una línea `<!-- a-revisar: <por qué> -->` debajo del
-  encabezado del Scenario. No escribas "El sistema SHALL responder 200 ante un
+  encabezado del Scenario. El motivo va completo en el comentario y no remite
+  a otro archivo ("ver Comportamiento actual a revisar 1"): el proposal se
+  archiva y la marca queda en la spec vigente. No escribas "El sistema SHALL responder 200 ante un
   error": eso convierte un bug en un requisito.
 - Si no pudiste determinar un comportamiento (por ejemplo, depende de un
   sistema externo al que no tenés acceso), no lo adivines: dejalo fuera de la
