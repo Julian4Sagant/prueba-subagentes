@@ -154,6 +154,15 @@ persona lo saque explícitamente de la lista.
   un test que use solo la interfaz pública. Si el WHEN no se puede provocar
   desde afuera (por ejemplo, "si la base tiene un registro corrupto" en un
   sistema sin base), el Scenario no sirve: reformulalo o sacalo.
+- **Valores concretos en los bordes.** En un Scenario de límite (el valor
+  justo, uno más, uno menos), el WHEN da el valor exacto o una regla para
+  construirlo que no deje nada a elegir: "151 caracteres: `A` repetida 146
+  veces, tres espacios y `BCD`". "Un tramo de tres espacios seguidos" no
+  alcanza: quien escriba el test va a inventar el resto, y ese valor no pasó
+  por el gate.
+- **Caracteres invisibles por su código.** Un espacio duro, un tabulador o
+  un salto de línea se escriben como `U+00A0`, `U+0009` o `U+000A`, nunca como
+  el carácter literal: en el gate no se distinguen de un espacio común.
 - Nombres de Scenario cortos y únicos: después los tests los copian letra por
   letra. Los nombres de Requirement, sin valores que puedan cambiar.
 - **La spec se lee sola.** No referencies secciones del proposal, del impacto
