@@ -187,6 +187,13 @@ repite.
   que no lo toca, dejala en `false` y justificá en `impacto.md`, en
   "Señales", por qué ese consumidor no se ve afectado. Una señal en `false`
   con un consumidor nombrado y sin justificación es un error.
+- **`tocaContrato` es "toca", no "rompe".** Agregar un campo a un request o
+  a una respuesta toca el contrato aunque sea compatible: va en `true`. Si
+  la compatibilidad importa, la decide el spec-writer; vos solo marcás que el
+  contrato cambia. Preguntate también: "¿alguna entrada que hoy se acepta
+  pasa a rechazarse, o al revés?". Un campo que hoy se ignora (el framework
+  descarta los campos desconocidos) y que pasa a validarse cambia el status
+  de esa entrada.
 - Tu recomendación no alcanza: el orquestador aplica las reglas sobre tus
   señales y nunca baja tu carril. Ante la duda, recomendá el más alto.
 - Si no encontrás `CARRILES.md`, no inventes las reglas: devolvé `BLOQUEADO`

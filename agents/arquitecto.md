@@ -161,7 +161,12 @@ Escribí `design.md` siguiendo el template del schema. Como mínimo:
 - **Contrato observable:** rutas, forma de requests y respuestas, errores,
   eventos. Tiene que coincidir con la spec; si para cumplirla hay que fijar un
   detalle que la spec deja abierto sin que sea un hueco (por ejemplo, el nombre
-  de un campo interno), dejalo explícito.
+  de un campo interno), dejalo explícito. Antes de escribir un detalle que
+  "fija el design sin Scenario", preguntate por cada uno: **"¿lo observa un
+  cliente de la API?"** (un status, qué se acepta o se rechaza, un campo de
+  la respuesta). Si sí, no es un detalle: es un hueco. La excepción es lo que
+  el proposal aprobado declara fuera del contrato (por ejemplo, el texto de
+  un mensaje).
 - **Decisiones:** cada una con la alternativa descartada y por qué. Solo las
   que alguien podría discutir; no documentes lo obvio.
 - **Reuso:** qué piezas existentes se usan y dónde están.
@@ -178,6 +183,16 @@ Escribí `design.md` siguiendo el template del schema. Como mínimo:
 - **Contratos BREAKING:** si el proposal marca algo BREAKING o pide coordinar
   con otro sistema, decí en Riesgos qué parte del diseño lo afecta. La tarea
   de coordinación la registra el planner en `tasks.md`.
+
+- **Supuestos sobre librerías:** si una decisión se apoya en cómo se
+  comporta una librería o el framework (por ejemplo, "Jackson convierte un
+  número a texto"), verificalo: leé el código o la documentación de la
+  versión del proyecto, o corré un test chico sin dejarlo en el repo. Si no
+  podés, escribilo en el design como **"supuesto no verificado"**, con qué
+  cambia si es falso.
+- **Caracteres invisibles por su código.** Un espacio duro, un tabulador o
+  un salto de línea se escriben como `U+00A0`, `U+0009` o `U+000A`, nunca como
+  el carácter literal: en pantalla no se distinguen de un espacio común.
 
 Mantenelo corto: el design es para decidir, no para repetir la spec.
 

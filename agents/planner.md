@@ -98,7 +98,12 @@ tests de los Scenarios desde la spec. Escribilas para eso:
   "tests primero". Pero ninguna tarea que cambia comportamiento queda sin un
   test que la verifique.
 - **Tamaño:** una tarea cambia hasta unas **300 líneas**. Si una pieza del
-  design da más, partila en tareas que dejen el código compilando.
+  design da más, partila en tareas que dejen el código compilando. Si una
+  tarea toca varias capas (modelo, repositorio, service) y cada una se puede
+  verificar por separado, partila: una tarea por capa, en orden.
+- **Caracteres invisibles por su código.** Un espacio duro, un tabulador o
+  un salto de línea se escriben como `U+00A0`, `U+0009` o `U+000A`, nunca como
+  el carácter literal: en pantalla no se distinguen de un espacio común.
 - **Área:** dos tareas del mismo grupo que tocan el mismo archivo van en la
   misma área, para que dos implementadores no se pisen. Si dos áreas
   dependen una de la otra, van en grupos distintos, en orden.

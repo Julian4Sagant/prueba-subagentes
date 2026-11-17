@@ -38,7 +38,7 @@ flowchart LR
 - **Una persona interviene solo en los gates.** Lo que el pedido no define, los agentes no lo preguntan: lo resuelven con la opción más razonable y lo dejan como **decisión pendiente** para el gate siguiente.
 - **El carril lo deciden las señales del explorador con reglas fijas**, y nunca baja. Por ejemplo, si toca un contrato, va como mínimo por COMPLETO, y si el área no tiene spec ni tests y el cambio la modifica, pasa primero por LEGACY. Los carriles, las señales, las reglas y qué corre cada carril están en [CARRILES.md](CARRILES.md), que es la única definición. El carril se recalcula después de Aprobar spec: si la spec aprobada revela un cambio BREAKING u otra señal, sube solo.
 - **Si el pedido ya se cumple** (código y test que lo cubren), el explorador devuelve `YA_CUMPLE` con la evidencia. No se crea change ni se fija carril: el orquestador verifica la evidencia, te la muestra y termina.
-- Cada agente termina con un **bloque JSON** de campos fijos, que el orquestador chequea antes de seguir. Máximo 3 rondas por agente.
+- Cada agente termina con un **bloque JSON** de campos fijos, que el orquestador chequea antes de seguir. Máximo 3 correcciones por agente (rechazos y devoluciones por verificación) y 2 vueltas por hueco por change.
 
 ## Qué adapta cada agente de la skill oficial
 

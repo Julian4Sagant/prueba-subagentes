@@ -148,6 +148,19 @@ persona lo saque explícitamente de la lista.
 - Cubrí el camino feliz, los errores y los bordes: datos faltantes o con
   formato inválido, límites (el valor justo y uno más), dependencias externas
   que fallan o no responden, permisos.
+- **Checklist de cada campo de entrada nuevo o modificado.** Antes de cerrar
+  la spec, recorré estas clases de valor y dejá cada una con su Scenario o
+  como decisión pendiente; ninguna puede quedar sin definir:
+  - ausente, `null`, vacío (`""`) y solo blancos;
+  - blancos que no son `U+0020` en los extremos y en el medio (`U+0009`,
+    `U+00A0`, saltos de línea);
+  - otro tipo JSON: número, booleano, objeto, array;
+  - los bordes del largo o del formato (el justo, uno menos, uno más).
+  Si el Requirement dice "MUST ser X" (texto, un número, un formato), tiene
+  que haber un Scenario por cada clase de valor que no es X, no solo por la
+  primera que se te ocurra. Si una clase no aplica (por ejemplo, el campo es
+  un número y no hay blancos), no hace falta un Scenario: decilo en el
+  reporte.
 - Cada THEN dice algo verificable desde afuera: status, forma de la respuesta,
   mensaje de error, efecto persistido. Nada de "maneja el error correctamente".
 - **Cada Scenario se tiene que poder verificar tal como está escrito,** con
@@ -162,7 +175,7 @@ persona lo saque explícitamente de la lista.
   por el gate.
 - **Caracteres invisibles por su código.** Un espacio duro, un tabulador o
   un salto de línea se escriben como `U+00A0`, `U+0009` o `U+000A`, nunca como
-  el carácter literal: en el gate no se distinguen de un espacio común.
+  el carácter literal: en pantalla no se distinguen de un espacio común.
 - Nombres de Scenario cortos y únicos: después los tests los copian letra por
   letra. Los nombres de Requirement, sin valores que puedan cambiar.
 - **La spec se lee sola.** No referencies secciones del proposal, del impacto
