@@ -77,13 +77,17 @@ tal cual lo escribió la persona. Al arquitecto y al planner, también el carril
 
 ### Qué va en el feedback
 
-El feedback tiene solo dos fuentes, cada una con su etiqueta:
+El feedback tiene solo tres fuentes, cada una con su etiqueta:
 - **"Comentario de la persona":** el comentario del gate, **textual**. No lo
   resumas, no lo reinterpretes y no le agregues nada.
 - **"Verificación del orquestador":** lo que encontraste al verificar, con
   evidencia: errores de `validate --strict`, campos que faltan en el JSON,
   decisiones del JSON que no están en el artefacto, preguntas abiertas sin
   resolver, o huecos del arquitecto (los Scenarios de `huecos`, tal cual).
+- **"Indicaciones del arquitecto":** solo para el planner, cuando el
+  arquitecto omitió el design: el campo `indicaciones` de su JSON, **textual**,
+  un ítem por línea. No es feedback de una ronda: es parte de la entrada de la
+  ronda 1 del planner.
 
 Las observaciones tuyas sobre el **contenido** (una ambigüedad que viste, un
 caso que falta, algo que te parece mal) no van al agente. Van a la persona, en
@@ -102,7 +106,7 @@ queda claro de dónde salió cada cambio.
    | explorador | `carril`, `senales` (con las 8 señales), `preguntasAbiertas`, `evidencia` |
    | arqueologo-legacy | `aRevisar`, `noDeterminado` |
    | spec-writer | `decisionesPendientes` |
-   | arquitecto | `design`, `decisionesPendientes` (con `OK`), `huecos` (con `HUECO_EN_SPEC`) |
+   | arquitecto | `design`, `decisionesPendientes` (con `OK`), `huecos` (con `HUECO_EN_SPEC`), `indicaciones` (con `"design":"OMITIDO"`) |
    | planner | `grupos`, `tareas`, `seguimiento`, `huecos` (con `HUECO_EN_DISENO`) |
 
    Las listas van aunque estén vacías (`[]`). Si el JSON no aparece, no parsea
@@ -135,7 +139,8 @@ queda claro de dónde salió cada cambio.
      `grupos` coincide con `grep "^## Grupo " tasks.md` y `tareas` con
      `grep -c "^- \[ \]" tasks.md`. Si el proposal marca algo BREAKING o pide
      coordinar con otro sistema, eso aparece en `seguimiento` (la sección
-     `## Workflow follow-up`).
+     `## Workflow follow-up`). Si el arquitecto dejó `indicaciones`, cada una
+     aparece en alguna tarea de `tasks.md`; si falta una, vuelve al planner.
 4. Si la verificación falla, volvé al mismo agente con el error como feedback.
 
 ## Cuando el pedido ya se cumple
@@ -184,8 +189,14 @@ El explorador marca las señales antes de que exista la spec, y una decisión
 del gate puede revelar una que no se veía (por ejemplo, un cambio que pasa a
 ser BREAKING). Después de que la persona aprueba la spec, mirá el proposal
 aprobado:
-- Si "Contratos afectados" marca algo BREAKING o nombra un consumidor externo
-  afectado, `tocaContrato` pasa a `true`.
+- Si "Contratos afectados" marca algo BREAKING, o dice que un consumidor
+  externo se ve afectado y en qué (no como hipótesis: "la caja recibe un 201
+  donde hoy recibe 400"), `tocaContrato` pasa a `true`. Un consumidor nombrado
+  como posibilidad en un cambio que el proposal aprobado declara compatible
+  **no** cambia la señal.
+- Si el explorador dejó preguntas abiertas que anunciaban un cambio de señal
+  ("si es BREAKING, `tocaContrato` pasa a `true`"), mirá cómo se resolvieron
+  en el gate y aplicalo.
 - Si aparece un dato personal o un cambio de auth que no estaba, lo mismo
   con `datosPersonales` o `auth`.
 
@@ -212,7 +223,10 @@ En cada gate frená y mostrale a la persona:
 - El diff contra la versión anterior, si es una ronda de corrección (ver
   abajo).
 - Tus "Observaciones del orquestador", si las hay, separadas de lo que
-  devolvió el agente.
+  devolvió el agente. En Aprobar spec, revisá en particular que los
+  Scenarios de borde tengan valores concretos (no "un tramo de espacios",
+  sino el valor exacto o cómo construirlo) y que los caracteres invisibles
+  estén escritos por su código (`U+00A0`): si no, anotalo como observación.
 
 ### Diff entre rondas
 

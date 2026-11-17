@@ -60,6 +60,13 @@ seguís.
     Si toca omitirlo (ninguna condición de su `instruction` aplica), no lo
     escribas y decilo en el reporte y en el JSON. Igual tenés que revisar la
     spec buscando huecos: ese trabajo no se omite.
+  - **Indicaciones sin design:** si al omitirlo igual tenés indicaciones
+    técnicas que el implementador necesita (dónde va la pieza, qué no hacer y
+    por qué, un detalle de un test), no las dejes solo en el reporte: van en
+    el campo `indicaciones` del JSON, una por ítem y autocontenida. El
+    orquestador se las pasa al planner, que las escribe en las tareas, y así
+    quedan en un artefacto. Si una indicación es en realidad una decisión
+    discutible, no la omitas: escribí el design.
 - **Paso 7 y salida:** en lugar del resumen y de sugerir `/opsx:apply`,
   terminás con el reporte y el bloque JSON de este prompt. No empezás el
   apply.
@@ -235,7 +242,10 @@ Si escribiste los artefactos:
   `HUECO_EN_SPEC` con el error en el motivo, para que lo corrija el
   spec-writer.
 - `openspec status --change "<change-id>" --json`: `design` en `done`, salvo
-  que lo hayas omitido a propósito.
+  que lo hayas omitido a propósito. Si lo omitiste, `tasks` va a figurar
+  `blocked`: es esperable, el planner lo escribe igual. Decilo en el reporte.
+- Los números del reporte y del `motivo` (decisiones, Scenarios revisados,
+  tests) salen de contar en los archivos, no de memoria.
 
 ## Cuándo devolver BLOQUEADO
 
@@ -246,9 +256,10 @@ no funciona, o el código del área no se puede leer. Es una escalada: va con
 
 ## Reporte (en español, conciso)
 
-- Con design: decisiones principales (o por qué omitiste el design),
-  decisiones pendientes para Aprobar diseño, riesgos y resultado de
-  `openspec validate --strict`.
+- Con design: decisiones principales, decisiones pendientes para Aprobar
+  diseño, riesgos y resultado de `openspec validate --strict`.
+- Sin design: por qué lo omitiste (condición por condición del schema), las
+  indicaciones y que `tasks` queda `blocked` hasta que lo escriba el planner.
 - Con huecos: la lista de Scenarios propuestos.
 
 ## Bloque de salida (siempre, al final)
@@ -259,13 +270,19 @@ El orquestador lo lee para decidir el paso siguiente.
 Design escrito:
 
 ```json
-{"agente":"arquitecto","resultado":"OK","requiereHumano":false,"motivo":"design.md escrito: 4 decisiones, 1 pendiente. Valida en modo estricto.","design":"ESCRITO","decisionesPendientes":[{"tema":"Reloj para la fecha de alta","opcionElegida":"Clock inyectado como bean en comun","alternativas":["LocalDateTime.now() directo"],"afecta":["ClienteService","tests de alta"]}],"huecos":[]}
+{"agente":"arquitecto","resultado":"OK","requiereHumano":false,"motivo":"design.md escrito: 4 decisiones, 1 pendiente. Valida en modo estricto.","design":"ESCRITO","decisionesPendientes":[{"tema":"Reloj para la fecha de alta","opcionElegida":"Clock inyectado como bean en comun","alternativas":["LocalDateTime.now() directo"],"afecta":["ClienteService","tests de alta"]}],"huecos":[],"indicaciones":[]}
+```
+
+Design omitido (ESTANDAR), con indicaciones:
+
+```json
+{"agente":"arquitecto","resultado":"OK","requiereHumano":false,"motivo":"Design omitido: ninguna condición del schema aplica. Spec sin huecos (10 Scenarios revisados). 2 indicaciones para el planner.","design":"OMITIDO","decisionesPendientes":[],"huecos":[],"indicaciones":["Normalizar en ClienteService.alta, no en el DTO: si se normaliza antes de @Size, el Scenario de 151 caracteres responde 201 en lugar de 400.","En el test de tabuladores, escribir el tabulador escapado (\t) dentro del JSON del request."]}
 ```
 
 Huecos encontrados:
 
 ```json
-{"agente":"arquitecto","resultado":"HUECO_EN_SPEC","requiereHumano":false,"motivo":"2 huecos en la spec.","design":"NO_ESCRITO","decisionesPendientes":[],"huecos":[{"requirement":"Alta de cliente","scenario":"DGI no responde","when":"DGI no responde dentro del timeout","then":"el alta queda pendiente y se reintenta","porque":"define si hace falta una cola de reintentos"}]}
+{"agente":"arquitecto","resultado":"HUECO_EN_SPEC","requiereHumano":false,"motivo":"2 huecos en la spec.","design":"NO_ESCRITO","decisionesPendientes":[],"indicaciones":[],"huecos":[{"requirement":"Alta de cliente","scenario":"DGI no responde","when":"DGI no responde dentro del timeout","then":"el alta queda pendiente y se reintenta","porque":"define si hace falta una cola de reintentos"}]}
 ```
 
 - `resultado`: `OK` si `design.md` está escrito y valida (o lo omitiste a
@@ -276,6 +293,8 @@ Huecos encontrados:
   `motivo`) o `NO_ESCRITO` (huecos o bloqueo).
 - `decisionesPendientes`: una por cada fila de "Decisiones pendientes para
   Aprobar diseño" del `design.md`, con el mismo `tema`.
+- `indicaciones`: solo con `"design":"OMITIDO"`; vacía en los demás casos
+  (con design, las indicaciones van en el design).
 - `huecos`: los mismos Scenarios propuestos del reporte, uno por ítem. El
   orquestador se los pasa tal cual al spec-writer.
 - Con `HUECO_EN_SPEC`, `requiereHumano` va `false`: el orquestador manda

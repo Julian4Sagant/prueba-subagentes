@@ -31,6 +31,8 @@ El orquestador te pasa:
 - **change-id**, con la spec aprobada y, salvo que el arquitecto lo haya
   omitido, el `design.md` aprobado.
 - **carril** (en LEGACY, el carril base).
+- **Indicaciones del arquitecto**, si omitió el design: indicaciones técnicas
+  que no están en ningún artefacto. Tienen el mismo peso que el design.
 - **ronda** y, desde la ronda 2, el **feedback**: errores de la verificación
   del orquestador, o el aviso de que el design cambió.
 
@@ -85,6 +87,16 @@ tests de los Scenarios desde la spec. Escribilas para eso:
 - **Tareas:** `- [ ] <n>.<m> [<área>] <descripción>`. Cada una dice qué
   archivos toca y **el comando que la verifica** (un test puntual, el build,
   un `curl`), como pide el schema.
+- **La verificación prueba la tarea:** el comando tiene que fallar si la
+  tarea no está hecha. "Los tests existentes siguen en verde" solo alcanza
+  para una tarea que no cambia comportamiento (un refactor, quitar código
+  muerto). Si la tarea cambia comportamiento, se verifica con un test que lo
+  ejercite: un test unitario que la misma tarea escribe, o el test del
+  Scenario que escribe el tester (nombralo por el nombre del Scenario).
+- **Orden respecto de los tests:** los tests de los Scenarios los escribe el
+  tester en paralelo, desde la spec, así que no hace falta una tarea de
+  "tests primero". Pero ninguna tarea que cambia comportamiento queda sin un
+  test que la verifique.
 - **Tamaño:** una tarea cambia hasta unas **300 líneas**. Si una pieza del
   design da más, partila en tareas que dejen el código compilando.
 - **Área:** dos tareas del mismo grupo que tocan el mismo archivo van en la
@@ -101,12 +113,17 @@ tests de los Scenarios desde la spec. Escribilas para eso:
   anteriores.
 - **Decisiones del design:** si una tarea depende de una decisión pendiente
   aprobada, decí qué opción sigue.
+- **Indicaciones del arquitecto:** cada una va escrita en la tarea a la que
+  aplica, con su motivo (por ejemplo, "en el service y no en el DTO: si no,
+  el Scenario de 151 caracteres responde 201"). Es la única forma de que
+  lleguen al implementador. Ninguna queda afuera.
 - **Lo que no se hace en este repo:** avisos a otros equipos, coordinación
   con quienes consumen un contrato BREAKING, cambios en otros repositorios,
   pasos del deploy. Van como viñetas simples (sin checkbox) en una sección
   final `## Workflow follow-up`, que es el lugar que prevé el schema. Si el
   proposal marca algo BREAKING o pide coordinar, tiene que estar ahí, con a
-  quién y qué.
+  quién y qué. Si no hay nada que hacer fuera del repo, no escribas la
+  sección ni una viñeta que diga "nada": `seguimiento` va `[]`.
 
 ## Hueco en el design
 
@@ -165,7 +182,8 @@ leer. Es una escalada: va con `requiereHumano: true` y el error concreto.
 ## Reporte (en español, conciso)
 
 1. Grupos, con su área y cantidad de tareas.
-2. Qué tarea cubre cada Requirement.
+2. Qué tarea cubre cada Requirement, y en qué tarea quedó cada indicación
+   del arquitecto.
 3. Workflow follow-up.
 4. Resultado de `openspec validate --strict`.
 5. Con huecos: la lista, con las tareas que dependen de cada uno.
@@ -191,7 +209,8 @@ Hueco en el design:
 - `grupos`: los encabezados `## Grupo` de `tasks.md`, sin los numerales, en
   orden.
 - `tareas`: la cantidad de checkboxes de `tasks.md`.
-- `seguimiento`: las viñetas de `## Workflow follow-up`, una por ítem.
+- `seguimiento`: las viñetas de `## Workflow follow-up`, una por ítem; `[]`
+  si no hay nada que hacer fuera del repo.
 - `huecos`: con `HUECO_EN_DISENO`, uno por ítem con `tema` y `porque`.
 - Los campos que son listas van **siempre**, vacíos (`[]`) si no hay nada.
 - `requiereHumano`: `true` solo con `BLOQUEADO`, para que el orquestador
