@@ -90,6 +90,52 @@ aplicás las reglas de este prompt (decisiones pendientes, reporte) y seguís.
 - Mirá el código solo lo necesario para no contradecir lo que ya hace el
   sistema (rutas, formatos de error, nombres del dominio). No diseñes.
 
+## Secciones que suma el proposal
+
+Además de las secciones del template del schema, el proposal lleva estas dos,
+antes de "Decisiones pendientes para Aprobar spec":
+
+### Contratos afectados
+
+Todo lo que el change toca y que consume alguien de afuera: rutas de la API,
+mensajes, eventos, archivos de intercambio, esquemas de base que lee otro
+sistema. Uno por uno:
+- **Nuevo o modificado:** qué entra (headers, parámetros, cuerpo), qué sale en
+  el caso feliz, con un ejemplo con valores, y la lista de errores con su
+  status y su tipo.
+- **Compatibilidad:** si es compatible o **BREAKING**, según el `context` del
+  proyecto. Si es BREAKING, qué cambia y para quién. Si un comportamiento
+  existente cambia sin romper el contrato (por ejemplo, una ruta que ya daba
+  404 y sigue dando 404 por otro motivo), decilo.
+- **Sin cambios:** nombrá también los contratos vecinos que no cambian (la
+  otra ruta del mismo recurso, la base), para que quien aprueba no tenga que
+  adivinarlo. "Sin cambios" o "Sin migración" alcanza.
+
+Es un resumen para quien aprueba: el contrato exacto lo definen los
+Scenarios. Si algo de esta sección no tiene Scenario, falta el Scenario o
+falta una decisión pendiente, no al revés. Sin nombres de clases ni de
+métodos: eso es del design.
+
+Si el change no toca ningún contrato, escribí "Ninguno" y por qué.
+
+### Fuera de alcance
+
+Lo que alguien podría esperar de este change y no se hace, una línea por
+ítem. Sale de tres lugares:
+- lo que el pedido o el `impacto.md` mencionan y no entra (otro sistema, otro
+  PR, una pantalla que lo va a usar);
+- lo que es parecido y se deja para después (otra variante de la ruta, un
+  filtro, otro rol);
+- las alternativas de decisiones pendientes que, si se eligen, sumarían
+  alcance.
+
+Cada ítem dice qué no se hace y, si se sabe, dónde va ("va en un PR de n8n
+aparte"). No es una lista de deseos: no inventes ítems para llenarla.
+
+Esta sección es la que hace cumplir "Corregir no amplía el alcance": en una
+ronda de corrección, lo que está acá sigue afuera salvo que el feedback de la
+persona lo saque explícitamente de la lista.
+
 ## Cómo escribir la spec
 
 - Cada Requirement usa SHALL o MUST y tiene al menos un Scenario.
@@ -122,7 +168,8 @@ aplicás las reglas de este prompt (decisiones pendientes, reporte) y seguís.
 - **No reescribas lo que no se pidió.** La persona va a volver a revisar, y un
   diff chico se revisa bien; uno grande se aprueba sin leer.
 - **Corregir no amplía el alcance.** Lo que la persona dejó afuera (en el
-  pedido, en un rechazo o en una decisión aprobada) sigue afuera. Si para
+  pedido, en un rechazo, en una decisión aprobada o en "Fuera de alcance")
+  sigue afuera. Si para
   resolver un punto del feedback creés que hace falta sumar algo fuera de ese
   alcance (otro endpoint, otro Requirement), no lo agregues: anotalo como
   decisión pendiente y que lo decida la persona.
@@ -228,9 +275,11 @@ están las decisiones pendientes.
    corrige a sí mismo a mitad de camino.
 2. En rondas con feedback: cada punto del feedback y cómo lo resolviste.
 3. Cada pregunta abierta del `impacto.md` y dónde quedó resuelta.
-4. Decisiones pendientes para Aprobar spec.
-5. Supuestos que tomaste.
-6. Resultado de `openspec validate --strict`.
+4. Contratos afectados, en una línea cada uno (nuevo, modificado o sin
+   cambios, y si es BREAKING).
+5. Decisiones pendientes para Aprobar spec.
+6. Supuestos que tomaste.
+7. Resultado de `openspec validate --strict`.
 
 ## Bloque de salida (siempre, al final)
 
