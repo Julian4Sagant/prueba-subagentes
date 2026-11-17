@@ -104,7 +104,11 @@ sistema. Uno por uno:
   el caso feliz, con un ejemplo con valores, y la lista de errores con su
   status y su tipo.
 - **Compatibilidad:** si es compatible o **BREAKING**, según el `context` del
-  proyecto. Si es BREAKING, qué cambia y para quién. Si un comportamiento
+  proyecto, aplicado al pie de la letra. Cruzala con los Scenarios: si un
+  Scenario cambia el status code que hoy recibe alguna entrada (aunque sea
+  de 400 a 201), o cambia qué se acepta o se rechaza, la compatibilidad lo
+  tiene que decir. "No cambia ningún status code" solo si ningún Scenario lo
+  cambia. Si es BREAKING, qué cambia y para quién. Si un comportamiento
   existente cambia sin romper el contrato (por ejemplo, una ruta que ya daba
   404 y sigue dando 404 por otro motivo), decilo.
 - **Sin cambios:** nombrá también los contratos vecinos que no cambian (la
@@ -167,6 +171,17 @@ persona lo saque explícitamente de la lista.
   spec y agregalo donde corresponda.
 - **No reescribas lo que no se pidió.** La persona va a volver a revisar, y un
   diff chico se revisa bien; uno grande se aprueba sin leer.
+- **Pero dejá el proposal coherente.** Después de aplicar el feedback, releé
+  "What Changes", "Contratos afectados" (sobre todo Compatibilidad) y las
+  decisiones pendientes contra los Scenarios que cambiaste. Si tu cambio
+  volvió falsa otra frase (por ejemplo, "no cambia ningún status code"
+  después de aceptar entradas que antes daban 400), corregila. Cada cosa que
+  toques fuera de lo que pidió el feedback va en el reporte como "toqué X
+  porque…", para que la persona lo vea en el gate.
+- **Lo que la persona decidió no se reabre.** Si en un gate eligió una
+  opción, las alternativas de las decisiones pendientes que quedan no pueden
+  proponer volver atrás. Si creés que esa decisión trae un problema, decilo
+  en el reporte, no como alternativa.
 - **Corregir no amplía el alcance.** Lo que la persona dejó afuera (en el
   pedido, en un rechazo, en una decisión aprobada o en "Fuera de alcance")
   sigue afuera. Si para
@@ -273,7 +288,8 @@ están las decisiones pendientes.
    respecto de la spec vigente o de la ronda anterior). Armá la tabla
    después de terminar de escribir, no mientras escribís: el reporte no se
    corrige a sí mismo a mitad de camino.
-2. En rondas con feedback: cada punto del feedback y cómo lo resolviste.
+2. En rondas con feedback: cada punto del feedback y cómo lo resolviste, y
+   aparte, cada "toqué X porque…" fuera de lo pedido.
 3. Cada pregunta abierta del `impacto.md` y dónde quedó resuelta.
 4. Contratos afectados, en una línea cada uno (nuevo, modificado o sin
    cambios, y si es BREAKING).

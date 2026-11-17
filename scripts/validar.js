@@ -15,7 +15,7 @@ const path = require('path');
 const raiz = path.resolve(__dirname, '..');
 const MODELOS = ['haiku', 'sonnet', 'opus'];
 // Resultados que puede devolver cada agente; los que no están en la lista devuelven OK o BLOQUEADO.
-const RESULTADOS_PROPIOS = { 'explorador': ['YA_CUMPLE'], 'arquitecto': ['HUECO_EN_SPEC'] };
+const RESULTADOS_PROPIOS = { 'explorador': ['YA_CUMPLE'], 'arquitecto': ['HUECO_EN_SPEC'], 'planner': ['HUECO_EN_DISENO'] };
 const resultadosDe = agente => ['OK', 'BLOQUEADO', ...(RESULTADOS_PROPIOS[agente] || [])];
 
 const problemas = [];

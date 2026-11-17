@@ -177,6 +177,12 @@ repite.
 
 - Las señales son hechos, no opiniones. Marcá `true` solo con evidencia
   (archivo, spec o test) y anotala en `impacto.md`.
+- **`tocaContrato` y los consumidores:** si en el análisis nombrás un sistema
+  externo que consume lo que el pedido cambia (un campo, un valor, un status,
+  qué se acepta o se rechaza), `tocaContrato` va en `true`. Si igual creés
+  que no lo toca, dejala en `false` y justificá en `impacto.md`, en
+  "Señales", por qué ese consumidor no se ve afectado. Una señal en `false`
+  con un consumidor nombrado y sin justificación es un error.
 - Tu recomendación no alcanza: el orquestador aplica las reglas sobre tus
   señales y nunca baja tu carril. Ante la duda, recomendá el más alto.
 - Si no encontrás `CARRILES.md`, no inventes las reglas: devolvé `BLOQUEADO`

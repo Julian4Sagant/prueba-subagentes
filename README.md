@@ -1,6 +1,6 @@
 # Subagentes de planificación para OpenSpec
 
-Cuatro subagentes de Claude Code que llevan un pedido (un ticket, un mensaje, una idea) hasta un change de OpenSpec listo para implementar: spec y diseño aprobados por una persona, y `tasks.md` en grupos listos para el apply.
+Cinco subagentes de Claude Code que llevan un pedido (un ticket, un mensaje, una idea) hasta un change de OpenSpec listo para implementar: spec y diseño aprobados por una persona, y `tasks.md` en grupos listos para el apply.
 
 Cubren las fases **explore** y **propose** de OpenSpec. Las rondas de corrección son la fase **update**. El apply y el verify quedan para otro tramo, por ejemplo [subagentesCC-openspec](https://github.com/Julian4Sagant/subagentesCC-openspec) con `/apply-grupo`.
 
@@ -9,7 +9,8 @@ Cubren las fases **explore** y **propose** de OpenSpec. Las rondas de correcció
 | `explorador` | explore | `openspec-explore` | `impacto.md` | sonnet |
 | `arqueologo-legacy` | propose del baseline | `openspec-propose`, `openspec-update-change` | proposal, specs y tests de caracterización | opus |
 | `spec-writer` | propose, 1ª mitad | `openspec-propose`, `openspec-update-change` | proposal y specs | opus |
-| `arquitecto` | propose, 2ª mitad | `openspec-propose`, `openspec-update-change` | design y tasks | opus |
+| `arquitecto` | propose, diseño | `openspec-propose`, `openspec-update-change` | design (y detecta huecos en la spec) | opus |
+| `planner` | propose, plan | `openspec-propose`, `openspec-update-change` | tasks, en grupos por área, sin gate | sonnet |
 
 ## El flujo
 
@@ -24,7 +25,10 @@ flowchart LR
     G1 --> R[arquitecto]
     R -.->|hueco en la spec| S
     R --> G2{{Aprobar diseño}}
-    G2 --> F[Listo para el apply]
+    R -.->|ESTANDAR sin design| PL
+    G2 --> PL[planner]
+    PL -.->|hueco en el design| R
+    PL --> F[Listo para el apply]
     G1 -.->|rechazo| S
     G2 -.->|rechazo| R
     G0 -.->|rechazo| A
@@ -32,7 +36,7 @@ flowchart LR
 
 - **El orquestador es la sesión principal de Claude Code**, siguiendo [ORQUESTACION.md](ORQUESTACION.md). Es el único que llama a los agentes, verifica lo que devuelven y frena en los gates.
 - **Una persona interviene solo en los gates.** Lo que el pedido no define, los agentes no lo preguntan: lo resuelven con la opción más razonable y lo dejan como **decisión pendiente** para el gate siguiente.
-- **El carril lo deciden las señales del explorador con reglas fijas**, y nunca baja. Por ejemplo, si toca un contrato, va como mínimo por COMPLETO, y si el área no tiene spec ni tests y el cambio la modifica, pasa primero por LEGACY. Los carriles, las señales, las reglas y qué corre cada carril están en [CARRILES.md](CARRILES.md), que es la única definición.
+- **El carril lo deciden las señales del explorador con reglas fijas**, y nunca baja. Por ejemplo, si toca un contrato, va como mínimo por COMPLETO, y si el área no tiene spec ni tests y el cambio la modifica, pasa primero por LEGACY. Los carriles, las señales, las reglas y qué corre cada carril están en [CARRILES.md](CARRILES.md), que es la única definición. El carril se recalcula después de Aprobar spec: si la spec aprobada revela un cambio BREAKING u otra señal, sube solo.
 - **Si el pedido ya se cumple** (código y test que lo cubren), el explorador devuelve `YA_CUMPLE` con la evidencia. No se crea change ni se fija carril: el orquestador verifica la evidencia, te la muestra y termina.
 - Cada agente termina con un **bloque JSON** de campos fijos, que el orquestador chequea antes de seguir. Máximo 3 rondas por agente.
 
@@ -53,7 +57,7 @@ Es un fork de `spec-driven` (OpenSpec 1.16.1) con tres cambios:
 
 El baseline del carril legacy usa `spec-driven` sin cambios, porque no pasa por el explorador.
 
-`tasks.md` usa encabezados `## Grupo N: <título>` y marca el área de cada tarea, que es el formato que espera `/apply-grupo`.
+`tasks.md` lo escribe el planner, después de Aprobar diseño y sin gate propio. Usa encabezados `## Grupo N: <título>` y marca el área de cada tarea, que es el formato que espera `/apply-grupo`; cada tarea cambia hasta unas 300 líneas y trae su comando de verificación, y lo que hay que hacer fuera del repo (por ejemplo, coordinar un cambio BREAKING) va en `## Workflow follow-up`.
 
 ## Instalación
 
@@ -107,7 +111,7 @@ CI corre todo en cada push y PR, con la versión de OpenSpec registrada en `skil
 ## Contenido
 
 ```
-agents/        los cuatro agentes (fuente de verdad)
+agents/        los cinco agentes (fuente de verdad)
 schemas/       el schema spec-driven-agentes, con sus templates
 hooks/         sin-escritura.js: bloquea los comandos de git que cambian el repo
 commands/      /pedido: arranca el flujo con un pedido nuevo
