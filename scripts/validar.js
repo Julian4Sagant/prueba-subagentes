@@ -2,8 +2,11 @@
 // Valida los agentes y el schema del repo. Sale con 0 si está todo bien y con 1 si hay problemas.
 //
 // Agentes: frontmatter (name igual al archivo, description, model, tools), skills openspec-*,
-// hook sin-escritura.js existente, y bloques JSON de ejemplo que parsean con todos los campos
-// que el orquestador chequea (ORQUESTACION.md, "Después de cada agente").
+// hook sin-escritura.js existente, y bloques JSON de ejemplo que parsean con exactamente los
+// campos que el orquestador chequea.
+// Los campos no están escritos acá: salen de la tabla "Campos obligatorios" de ORQUESTACION.md,
+// y las señales, de la tabla de CARRILES.md. Así cada dato tiene un solo dueño, y este script
+// comprueba que los ejemplos de los agentes coincidan con él.
 // Schema: schema.yaml con el artefacto impacto primero y cada template referenciado presente.
 
 const fs = require('fs');
@@ -11,17 +14,53 @@ const path = require('path');
 
 const raiz = path.resolve(__dirname, '..');
 const MODELOS = ['haiku', 'sonnet', 'opus'];
-const COMUNES = ['agente', 'resultado', 'requiereHumano', 'motivo'];
-const CAMPOS = {
-	'explorador': ['carril', 'senales', 'preguntasAbiertas'],
-	'arqueologo-legacy': ['aRevisar', 'noDeterminado'],
-	'spec-writer': ['decisionesPendientes'],
-	'arquitecto': ['design', 'grupos', 'decisionesPendientes', 'huecos'],
-};
-const SENALES = ['tocaContrato', 'datosPersonales', 'auth', 'dependencias', 'multiRepo', 'areaSinSpec', 'areaSinTests', 'modificaComportamiento'];
 const RESULTADOS = ['OK', 'HUECO_EN_SPEC', 'BLOQUEADO'];
 
 const problemas = [];
+
+function leer(rel) {
+	const archivo = path.join(raiz, rel);
+	return fs.existsSync(archivo) ? fs.readFileSync(archivo, 'utf8').replace(/\r\n/g, '\n') : null;
+}
+
+/**
+ * Lee la tabla "| Agente | Campos obligatorios |" de ORQUESTACION.md. Devuelve { todos: [...],
+ * <agente>: [...] } con los nombres entre backticks de cada fila, sin lo que está entre
+ * paréntesis (por ejemplo, "(con `OK`)" es una aclaración, no un campo).
+ */
+function camposDeOrquestacion() {
+	const texto = leer('ORQUESTACION.md');
+	if (!texto) {
+		return null;
+	}
+	const inicio = texto.indexOf('| Agente | Campos obligatorios |');
+	if (inicio < 0) {
+		problemas.push('ORQUESTACION.md: no tiene la tabla "| Agente | Campos obligatorios |"');
+		return null;
+	}
+	const campos = {};
+	for (const linea of texto.slice(inicio).split('\n').slice(2)) {
+		const fila = /^\s*\|\s*([\w-]+)\s*\|(.*)\|\s*$/.exec(linea);
+		if (!fila) {
+			break;
+		}
+		campos[fila[1]] = [...fila[2].replace(/\([^)]*\)/g, '').matchAll(/`(\w+)`/g)].map(m => m[1]);
+	}
+	if (!campos.todos) {
+		problemas.push('ORQUESTACION.md: la tabla de campos no tiene la fila "todos"');
+	}
+	return campos;
+}
+
+/** Las señales de la tabla de CARRILES.md: las filas que empiezan con un nombre entre backticks. */
+function senalesDeCarriles() {
+	const texto = leer('CARRILES.md');
+	return texto ? [...texto.matchAll(/^\| `(\w+)` \|/gm)].map(m => m[1]) : [];
+}
+
+const CAMPOS = camposDeOrquestacion() || {};
+const COMUNES = CAMPOS.todos || [];
+const SENALES = senalesDeCarriles();
 
 function campo(fm, nombre) {
 	const m = new RegExp(`^${nombre}:[ \\t]*(.+)$`, 'm').exec(fm);
@@ -65,7 +104,7 @@ function validarAgente(archivo) {
 
 	const requeridos = CAMPOS[base];
 	if (!requeridos) {
-		problemas.push(`${rel}: agente sin campos definidos en scripts/validar.js`);
+		problemas.push(`${rel}: la tabla "Campos obligatorios" de ORQUESTACION.md no tiene una fila para este agente`);
 		return;
 	}
 	const bloques = [...texto.matchAll(/```json\n([\s\S]*?)\n```/g)];
@@ -81,9 +120,15 @@ function validarAgente(archivo) {
 			problemas.push(`${rel}: el JSON de ejemplo ${i + 1} no parsea (${e.message})`);
 			return;
 		}
-		for (const c of [...COMUNES, ...requeridos]) {
+		const esperados = [...COMUNES, ...requeridos];
+		for (const c of esperados) {
 			if (!(c in json)) {
-				problemas.push(`${rel}: al JSON de ejemplo ${i + 1} le falta "${c}"`);
+				problemas.push(`${rel}: al JSON de ejemplo ${i + 1} le falta "${c}", que ORQUESTACION.md exige`);
+			}
+		}
+		for (const c of Object.keys(json)) {
+			if (!esperados.includes(c)) {
+				problemas.push(`${rel}: el JSON de ejemplo ${i + 1} trae "${c}", que no está en la tabla de campos de ORQUESTACION.md`);
 			}
 		}
 		if (json.agente !== base) {
@@ -95,7 +140,7 @@ function validarAgente(archivo) {
 		if (json.senales) {
 			const claves = Object.keys(json.senales).sort().join();
 			if (claves !== [...SENALES].sort().join()) {
-				problemas.push(`${rel}: senales no tiene exactamente las 8 señales`);
+				problemas.push(`${rel}: senales no tiene exactamente las ${SENALES.length} señales de CARRILES.md`);
 			}
 		}
 	});
@@ -128,19 +173,17 @@ function validarSchema(carpeta) {
 	}
 }
 
-// CARRILES.md es la única definición de señales y carriles: tiene que traer las 8 señales y los
-// 4 carriles, y el explorador y el orquestador tienen que citarlo en vez de repetir la tabla.
+// CARRILES.md es la única definición de señales y carriles: tiene que traer la tabla de señales y
+// los 4 carriles, y el explorador y el orquestador tienen que citarlo en vez de repetir la tabla.
+// Que la tabla tenga las señales correctas lo comprueba el JSON de ejemplo del explorador.
 function validarCarriles() {
-	const archivo = path.join(raiz, 'CARRILES.md');
-	if (!fs.existsSync(archivo)) {
+	const texto = leer('CARRILES.md');
+	if (!texto) {
 		problemas.push('CARRILES.md: falta');
 		return;
 	}
-	const texto = fs.readFileSync(archivo, 'utf8');
-	for (const s of SENALES) {
-		if (!texto.includes(`| \`${s}\` |`)) {
-			problemas.push(`CARRILES.md: falta la señal ${s} en la tabla de señales`);
-		}
+	if (SENALES.length === 0) {
+		problemas.push('CARRILES.md: no tiene la tabla de señales (filas "| `señal` | ... |")');
 	}
 	for (const c of ['RAPIDO', 'ESTANDAR', 'COMPLETO', 'LEGACY']) {
 		if (!texto.includes(`**${c}**`)) {
@@ -161,9 +204,9 @@ function validarCarriles() {
 const carpetaAgentes = path.join(raiz, 'agents');
 const agentes = fs.readdirSync(carpetaAgentes).filter(f => f.endsWith('.md'));
 agentes.forEach(f => validarAgente(path.join(carpetaAgentes, f)));
-for (const nombre of Object.keys(CAMPOS)) {
+for (const nombre of Object.keys(CAMPOS).filter(n => n !== 'todos')) {
 	if (!agentes.includes(`${nombre}.md`)) {
-		problemas.push(`agents/${nombre}.md: falta`);
+		problemas.push(`agents/${nombre}.md: ORQUESTACION.md le define campos, pero el agente no existe`);
 	}
 }
 const carpetaSchemas = path.join(raiz, 'schemas');

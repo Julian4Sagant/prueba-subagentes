@@ -1,0 +1,36 @@
+{
+	"openspec": "1.16.1",
+	"skills": {
+		"openspec-propose": {
+			"pasos": {
+				"1": "Understand the request and clarify material ambiguity",
+				"2": "Load project context",
+				"3": "Determine the workflow schema",
+				"4": "Create the change directory",
+				"5": "Get the artifact build order",
+				"6": "Create every artifact in the required set",
+				"7": "Show final status"
+			},
+			"secciones": []
+		},
+		"openspec-update-change": {
+			"pasos": {
+				"1": "Select the change",
+				"3": "Understand the request",
+				"4": "Read and reconcile",
+				"5": "Confirm and apply, one artifact at a time",
+				"6": "Point to the next step (guidance only - NEVER act on it)"
+			},
+			"secciones": []
+		},
+		"openspec-explore": {
+			"pasos": {},
+			"secciones": [
+				"Check for context",
+				"Investigate the codebase",
+				"Surface risks and unknowns",
+				"When no change exists"
+			]
+		}
+	}
+}

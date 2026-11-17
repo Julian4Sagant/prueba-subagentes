@@ -7,6 +7,7 @@ on:
 
 jobs:
   validar:
+    name: Agentes, schema y hook
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,8 +16,32 @@ jobs:
         with:
           node-version: 22
 
-      - name: Validar agentes y schema
+      - name: Validar agentes, schema, carriles y campos de ORQUESTACION.md
         run: node scripts/validar.js
 
-      - name: Revisar la sintaxis del hook
-        run: node --check hooks/sin-escritura.js
+      - name: Citas a las skills registradas
+        run: node scripts/verificar-skills.js
+
+      - name: Tests del hook
+        run: node --test scripts/test-hook.js
+
+  openspec:
+    name: Con la CLI de OpenSpec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # La versión fija es la de scripts/skills-referenciadas.json: la misma con la que se
+      # registraron los pasos que citan los agentes.
+      - name: Instalar OpenSpec
+        run: npm install -g "@fission-ai/openspec@$(node -p "require('./scripts/skills-referenciadas.json').openspec")"
+
+      - name: Pasos y secciones de las skills oficiales
+        run: node scripts/verificar-skills.js --openspec
+
+      - name: Prueba de punta a punta (instalador, schema, change y baseline)
+        run: node scripts/humo.js
