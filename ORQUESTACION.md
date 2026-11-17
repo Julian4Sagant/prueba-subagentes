@@ -8,9 +8,14 @@ corresponde.
 
 ## Encadená los agentes sin cortar
 
-Lanzá cada subagente en primer plano y esperá su resultado antes de seguir;
-nunca en segundo plano. Solo le devolvés el control a la persona en estos
-casos:
+Llamá a un agente por vez y esperá su resultado antes de seguir. Según el
+entorno, el agente puede correr en segundo plano y tu turno terminar hasta
+que llegue el aviso de que terminó: eso no es un corte. Mientras esperás, no
+le preguntes nada a la persona ni le pidas que confirme; cuando llega el
+aviso, verificá y seguí.
+
+Solo le devolvés el control a la persona (le hacés una pregunta y esperás su
+respuesta) en estos casos:
 - un gate (Validar baseline, Aprobar spec, Aprobar diseño);
 - un `YA_CUMPLE`;
 - un `BLOQUEADO`;
@@ -24,7 +29,8 @@ carril quedó, por ejemplo, no es un punto de parada: lo decís y seguís.
 
 ```
 pedido → explorador → [LEGACY: arqueologo-legacy → GATE Validar baseline → archivar]
-       → spec-writer → GATE Aprobar spec → arquitecto → GATE Aprobar diseño → fin del tramo
+       → spec-writer → GATE Aprobar spec → [recalcular carril] → arquitecto
+       → GATE Aprobar diseño (si hay design) → planner → fin del tramo
 
 pedido → explorador con YA_CUMPLE → verificar la evidencia → mostrarla → fin (sin carril)
 ```
@@ -42,7 +48,8 @@ oficial de su fase y su prompt dice qué adapta. El schema del proyecto es
 | explore | `openspec-explore` | explorador | `impacto` |
 | propose (baseline) | `openspec-propose` | arqueologo-legacy | `proposal`, `specs` (schema `spec-driven`) |
 | propose, 1ª mitad | `openspec-propose` | spec-writer | `proposal`, `specs` |
-| propose, 2ª mitad | `openspec-propose` | arquitecto | `design` (condicional en ESTANDAR), `tasks` |
+| propose, diseño | `openspec-propose` | arquitecto | `design` (condicional en ESTANDAR) |
+| propose, plan | `openspec-propose` | planner | `tasks` |
 | update | `openspec-update-change` | rondas de corrección de cada agente | los del agente |
 | archive | (CLI) | orquestador, solo el baseline | — |
 
@@ -56,14 +63,17 @@ Vueltas atrás:
   propuestos como feedback. La aprobación de la spec se anula: vuelve a pasar
   por Aprobar spec.
 - Aprobar diseño rechazada → arquitecto, con el comentario como feedback.
+- Planner devuelve `HUECO_EN_DISENO` → arquitecto, con los huecos como
+  feedback. Si el design cambia (o se escribe uno que se había omitido),
+  vuelve a pasar por Aprobar diseño y después el planner corre de nuevo.
 - Validar baseline rechazada → arqueologo-legacy, con el comentario.
 
 ## Cómo llamar a cada agente
 
 Pasale siempre: el change-id, la ronda (cuántas veces corrió ese agente en
 este change, empezando en 1) y el feedback si lo hay. Al explorador, el pedido
-tal cual lo escribió la persona. Al arquitecto, también el carril (en LEGACY,
-el carril base).
+tal cual lo escribió la persona. Al arquitecto y al planner, también el carril
+(en LEGACY, el carril base).
 
 ### Qué va en el feedback
 
@@ -92,7 +102,8 @@ queda claro de dónde salió cada cambio.
    | explorador | `carril`, `senales` (con las 8 señales), `preguntasAbiertas`, `evidencia` |
    | arqueologo-legacy | `aRevisar`, `noDeterminado` |
    | spec-writer | `decisionesPendientes` |
-   | arquitecto | `design`, `grupos`, `decisionesPendientes` (con `OK`), `huecos` (con `HUECO_EN_SPEC`) |
+   | arquitecto | `design`, `decisionesPendientes` (con `OK`), `huecos` (con `HUECO_EN_SPEC`) |
+   | planner | `grupos`, `tareas`, `seguimiento`, `huecos` (con `HUECO_EN_DISENO`) |
 
    Las listas van aunque estén vacías (`[]`). Si el JSON no aparece, no parsea
    o le falta un campo, **volvé al mismo agente** con el problema como
@@ -112,13 +123,19 @@ queda claro de dónde salió cada cambio.
    - explorador con `YA_CUMPLE`: ver "Cuando el pedido ya se cumple".
    - arqueologo-legacy: `openspec validate baseline-<capability> --strict` en
      verde y los tests de caracterización pasan.
-   - spec-writer: `openspec validate <change-id> --strict` en verde.
-   - arquitecto con `OK`: `validate --strict` en verde y `openspec status`
-     con `tasks` en `done`. `design` en `done`, salvo `"design":"OMITIDO"`,
-     que solo vale si el carril (o el base, en LEGACY) es ESTANDAR: en
-     COMPLETO, vuelve al arquitecto.
-     `grupos` coincide con los encabezados `## Grupo` de `tasks.md`
-     (`grep "^## Grupo " tasks.md`).
+   - spec-writer: `openspec validate <change-id> --strict` en verde. Y la
+     compatibilidad declarada coincide con los Scenarios: si un Scenario
+     cambia el status code que hoy recibe alguna entrada, o qué se acepta o
+     se rechaza, "Contratos afectados" lo tiene que decir. Si dice "no cambia
+     ningún status code" y un Scenario lo cambia, vuelve al spec-writer.
+   - arquitecto con `OK`: `validate --strict` en verde y `design` en `done`,
+     salvo `"design":"OMITIDO"`, que solo vale si el carril (o el base, en
+     LEGACY) es ESTANDAR: en COMPLETO, vuelve al arquitecto.
+   - planner con `OK`: `validate --strict` en verde y `tasks` en `done`.
+     `grupos` coincide con `grep "^## Grupo " tasks.md` y `tareas` con
+     `grep -c "^- \[ \]" tasks.md`. Si el proposal marca algo BREAKING o pide
+     coordinar con otro sistema, eso aparece en `seguimiento` (la sección
+     `## Workflow follow-up`).
 4. Si la verificación falla, volvé al mismo agente con el error como feedback.
 
 ## Cuando el pedido ya se cumple
@@ -161,13 +178,33 @@ Con el JSON del explorador:
 4. Seguí la tabla "Qué corre cada carril". RAPIDO termina acá: no hay change,
    spec ni diseño.
 
+### Recalcular el carril después de Aprobar spec
+
+El explorador marca las señales antes de que exista la spec, y una decisión
+del gate puede revelar una que no se veía (por ejemplo, un cambio que pasa a
+ser BREAKING). Después de que la persona aprueba la spec, mirá el proposal
+aprobado:
+- Si "Contratos afectados" marca algo BREAKING o nombra un consumidor externo
+  afectado, `tocaContrato` pasa a `true`.
+- Si aparece un dato personal o un cambio de auth que no estaba, lo mismo
+  con `datosPersonales` o `auth`.
+
+Volvé a aplicar las reglas con las señales actualizadas. Si el carril sube,
+subilo: no le preguntes a la persona, porque las reglas son fijas. Decile qué
+señal cambió, por qué y qué carril quedó, y seguí. El carril nunca baja.
+
+Si en una ronda anterior notaste la duda (por ejemplo, en una observación del
+orquestador) y la persona no la resolvió, no la repitas ronda tras ronda:
+esta regla la resuelve después del gate.
+
 ## Gates
 
 En cada gate frená y mostrale a la persona:
 - Qué hay que aprobar y dónde está (rutas de los archivos).
-- Un resumen corto: Requirements y Scenarios, o decisiones del diseño y los
-  grupos de `tasks.md` con sus áreas. En Aprobar diseño se aprueban juntos
-  `design.md` y `tasks.md`.
+- Un resumen corto: en Aprobar spec, los Requirements y Scenarios, y del
+  proposal las secciones **"Contratos afectados"** (con la compatibilidad) y
+  **"Fuera de alcance"**, tal como están. En Aprobar diseño, las decisiones
+  del diseño. Las tareas no pasan por un gate: las escribe el planner después.
 - Las **decisiones pendientes** del campo `decisionesPendientes`, una por
   una, con la opción elegida y las alternativas. En Validar baseline, los
   ítems de `aRevisar` y `noDeterminado`. Todos, aunque sean muchos: ninguno
@@ -193,8 +230,9 @@ git diff --no-index --ignore-cr-at-eol .orquestacion/<change-id>/ronda-<N>/<arch
 por los finales de línea de Windows.
 
 Mostrá el diff de **todos** los archivos que cambiaron en la ronda (spec,
-proposal, design, tests), tal cual sale del comando. No lo recortes ni lo
-resumas a mano. Si es largo, escribilo completo a
+proposal, design, tests), tal cual sale del comando. **Nunca lo recortes ni lo
+resumas a mano**, ni con "(mismo texto)" ni con "…": si para mostrarlo tendrías
+que acortarlo, es largo. Si es largo, escribilo completo a
 `.orquestacion/<change-id>/ronda-<N>.diff`, pasale la ruta a la persona y
 mostrá en pantalla solo la lista de archivos con cuántas líneas cambiaron en
 cada uno (`git diff --no-index --ignore-cr-at-eol --stat`).
@@ -203,7 +241,11 @@ Esperá una respuesta explícita: aprobada, o rechazada con comentario. Si
 rechaza sin comentario, pedile qué hay que cambiar. No sigas sin respuesta.
 
 Una aprobación vale para la versión exacta que se aprobó. Si el archivo cambió
-después (por ejemplo, por un hueco del arquitecto), vuelve al gate.
+después (por ejemplo, por un hueco del arquitecto o del planner), vuelve al
+gate.
+
+Aprobar diseño solo existe si el arquitecto escribió el design. Si lo omitió
+(ESTANDAR), no hay gate: seguí directo con el planner.
 
 ## Archivar el baseline (solo LEGACY)
 
@@ -216,7 +258,8 @@ spec-writer del change funcional.
 - Máximo **3 rondas** por agente en el mismo change. Si se llega al tope,
   frená y explicale a la persona qué pasó en cada ronda.
 - **Qué es una ronda:** cada vez que llamás a un agente y puede cambiar sus
-  artefactos, sea por un rechazo en el gate, por un hueco del arquitecto o por
+  artefactos, sea por un rechazo en el gate, por un hueco del arquitecto o del
+  planner, o por
   tu verificación (validate, verificación cruzada). La única vuelta que no
   cuenta es el reintento para completar el JSON, porque ahí el agente no toca
   archivos. Llevá la cuenta por agente y decí siempre en qué ronda va.
@@ -228,8 +271,10 @@ spec-writer del change funcional.
 
 ## Al terminar el tramo
 
-Mostrá un resumen: carril y por qué, rondas de cada agente, gates con su
-resultado, decisiones pendientes que se aprobaron y archivos generados.
+Mostrá un resumen: carril y por qué (y si se recalculó), rondas de cada
+agente, gates con su resultado, decisiones pendientes que se aprobaron,
+archivos generados, los grupos de `tasks.md` y el `seguimiento` del planner
+(lo que hay que hacer fuera del repo).
 Confirmá con `openspec status --change <change-id> --json` que todo lo que
 pide `applyRequires` está `done`, y decí cómo sigue: rama
 `change/<change-id>` y `/apply-grupo <change-id> 1`. No lo ejecutes.

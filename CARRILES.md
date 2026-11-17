@@ -9,8 +9,8 @@ archivos lo citan sin repetirlo. Si cambiás una regla, cambiala acá.
 | Carril | Para qué | Qué recorre en este tramo |
 | --- | --- | --- |
 | **RAPIDO** | Typo, texto, configuración o un cambio trivial sin comportamiento nuevo. | Nada: no se crea change. Va directo a la implementación y al gate de Aprobar MR. |
-| **ESTANDAR** | Un cambio acotado a un área, sin ninguna señal de riesgo. | explorador → spec-writer → Aprobar spec → arquitecto (design solo si el schema lo pide) → Aprobar diseño. |
-| **COMPLETO** | Contratos, datos personales, auth, varios repos o lógica crítica. | Igual que ESTANDAR, pero el design se escribe siempre. |
+| **ESTANDAR** | Un cambio acotado a un área, sin ninguna señal de riesgo. | explorador → spec-writer → Aprobar spec → arquitecto (design solo si el schema lo pide; si lo escribe, Aprobar diseño) → planner. |
+| **COMPLETO** | Contratos, datos personales, auth, varios repos o lógica crítica. | Igual que ESTANDAR, pero el design se escribe siempre, así que siempre hay Aprobar diseño. |
 | **LEGACY** | El área no tiene spec ni tests y el cambio modifica comportamiento. | Primero el baseline: arqueologo-legacy → Validar baseline → archivar. Después sigue por su **carril base** (ver abajo). |
 
 **Sin carril:** si el explorador comprueba que el pedido ya se cumple (código
@@ -51,9 +51,15 @@ reglas, en este orden:
   dan las reglas, queda el del explorador. Ante la duda, el más alto.
 - **El carril base de LEGACY** sale de las reglas 2 a 4 y de la recomendación
   del explorador, y nunca es RAPIDO: si da RAPIDO, es ESTANDAR. Es el carril
-  con el que siguen el spec-writer y el arquitecto después del baseline.
+  con el que siguen el spec-writer, el arquitecto y el planner después del
+  baseline.
 - El orquestador le dice a la persona qué carril quedó (y el base, en LEGACY)
   y qué regla lo decidió.
+- **Se recalcula después de Aprobar spec.** Las señales las marca el
+  explorador antes de que exista la spec; una decisión del gate puede revelar
+  una nueva (por ejemplo, un cambio que pasa a ser BREAKING vuelve
+  `tocaContrato` en `true`). El orquestador vuelve a aplicar las reglas y, si
+  el carril sube, lo sube sin preguntar. Cómo, en `ORQUESTACION.md`.
 
 ## Qué corre cada carril
 
@@ -62,8 +68,9 @@ reglas, en este orden:
 | explorador (`impacto`) | sí, sin change | sí | sí | sí |
 | arqueologo-legacy + Validar baseline | — | — | — | sí |
 | spec-writer + Aprobar spec | — | sí | sí | sí |
-| arquitecto: `design` | — | si el schema lo pide | siempre | según el carril base |
-| arquitecto: `tasks` + Aprobar diseño | — | sí | sí | sí |
+| arquitecto (busca huecos en la spec) | — | sí | sí | sí |
+| arquitecto: `design` + Aprobar diseño | — | si el schema lo pide | siempre | según el carril base |
+| planner: `tasks` (sin gate) | — | sí | sí | sí |
 
 ### Después de este tramo (referencia)
 
