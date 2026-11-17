@@ -90,6 +90,29 @@ Por ejemplo, `/pedido Al dar de alta un cliente, recortar los espacios del nombr
 
 El orquestador corre el explorador, decide el carril y frena en cada gate. Para aprobar, respondé "aprobada". Para rechazar, escribí qué hay que cambiar. Al terminar, te dice cómo seguir con el apply.
 
+### Sin terminal: `Orquestador.java`
+
+`orquestador/Orquestador.java` recibe los pedidos y las decisiones como archivos en una bandeja y corre Claude Code sin interfaz (`claude -p`) en el proyecto. No decide nada del flujo: lanza `/pedido`, lee el bloque de estado con el que el orquestador cierra cada gate (ver "Bloque de estado al devolver el control" en `ORQUESTACION.md`) y, con cada decisión, retoma la misma sesión con `--resume`. Necesita Java 17 o más.
+
+```text
+java orquestador/Orquestador.java --proyecto C:/DEV/prueba-agentes --bandeja bandeja --vigilar
+```
+
+1. Dejá el pedido en `bandeja/entrada/<id>.txt`. El nombre es el id del pedido, por ejemplo `FAC-12.txt`; la primera línea puede ser `autor: ...`.
+2. Cuando la corrida frena, leé `bandeja/gates/<id>-<n>.md`. Tiene lo que mostró el orquestador, en qué gate espera, el costo y los permisos que se negaron.
+3. Respondé con un `.txt` en `bandeja/decisiones/`:
+
+   ```text
+   pedido: FAC-12
+   gate: APROBAR_SPEC
+   decision: rechazada
+   El comentario va debajo y puede ocupar varias líneas.
+   ```
+
+   `decision` es `aprobada`, `rechazada` (con comentario) o, en una `ESCALADA`, `respuesta` (con texto). Una decisión para un gate que no es el que espera el pedido se descarta.
+
+Los permisos de la corrida salen de `bandeja/claude-settings.json`, que se crea la primera vez con una lista base y se puede editar (o se pasa otro con `--permisos`). La corrida usa `--permission-mode acceptEdits`: lo que no está permitido se niega, y queda listado en el gate. Otras opciones: `--modelo`, `--presupuesto <usd>` (tope por corrida, 30 por defecto) y `--timeout <minutos>` (180).
+
 ## Validación
 
 | Comando | Qué comprueba | Necesita |
@@ -97,6 +120,7 @@ El orquestador corre el explorador, decide el carril y frena en cada gate. Para 
 | `node scripts/validar.js` | Frontmatter, skills y hook de cada agente; schema con `impacto` primero y sus templates; `CARRILES.md` con las señales y los 4 carriles, citado y no copiado; y que el JSON de ejemplo de cada agente traiga **exactamente** los campos de la tabla "Campos obligatorios" de `ORQUESTACION.md` y las señales de `CARRILES.md`. | Node |
 | `node scripts/verificar-skills.js` | Que cada paso ("Paso 6") y sección ("Check for context") de una skill oficial que citan los agentes esté registrado en `scripts/skills-referenciadas.json`. | Node |
 | `node --test scripts/test-hook.js` | Que `sin-escritura.js` bloquee `git commit`, `push`, `reset`, `checkout` y similares, y deje pasar `openspec`, `git status` y `git diff`. | Node |
+| `node --test scripts/test-orquestador.js` | Que `Orquestador.java` lance `/pedido`, lea el bloque de estado, retome la misma sesión con cada decisión y descarte las que no corresponden, con un Claude Code falso (`pruebas/orquestador/claude-falso.js`). | Node y Java 17+ |
 | `node scripts/verificar-skills.js --openspec` | Que esos pasos y secciones sigan existiendo, con el mismo título, en las skills que genera la CLI instalada. | OpenSpec |
 | `node scripts/humo.js` | De punta a punta, en un proyecto temporal: `openspec init`, el instalador y su lista de pendientes, `openspec schema validate`, un change que arranca por `impacto` y valida sin design, el apply leyendo los `## Grupo N:`, y un baseline que valida y se archiva. | OpenSpec y PowerShell |
 
@@ -117,6 +141,7 @@ hooks/         sin-escritura.js: bloquea los comandos de git que cambian el repo
 commands/      /pedido: arranca el flujo con un pedido nuevo
 ORQUESTACION.md  el guion que sigue la sesión principal
 CARRILES.md    carriles, señales, reglas y qué corre cada carril
+orquestador/   Orquestador.java: pedidos y decisiones por bandeja, con claude -p
 scripts/       instalador, validador, verificación de las skills, tests del hook y prueba de humo
 pruebas/humo/  fixtures de la prueba de humo: un change y un baseline mínimos
 ```
