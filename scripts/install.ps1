@@ -1,4 +1,4 @@
-﻿# Instala los agentes de planificación, el hook, el schema y el guion del orquestador en un proyecto.
+﻿# Instala los agentes de planificación, el hook, el schema, el guion del orquestador y los carriles en un proyecto.
 # Uso: powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Proyecto C:\ruta\al\proyecto
 #
 # Los agentes van al proyecto y no a ~/.claude, porque el hook se resuelve con $CLAUDE_PROJECT_DIR.
@@ -21,8 +21,8 @@ New-Item -ItemType Directory -Force -Path (Join-Path $claude 'agents'), (Join-Pa
 Copy-Item (Join-Path $raiz 'agents\*.md') (Join-Path $claude 'agents') -Force
 Copy-Item (Join-Path $raiz 'hooks\*.js') (Join-Path $claude 'hooks') -Force
 Copy-Item (Join-Path $raiz 'schemas\*') $schemas -Recurse -Force
-Copy-Item (Join-Path $raiz 'ORQUESTACION.md') $Proyecto -Force
-Write-Host "Agentes, hook, schema y ORQUESTACION.md instalados en $Proyecto"
+Copy-Item (Join-Path $raiz 'ORQUESTACION.md'), (Join-Path $raiz 'CARRILES.md') $Proyecto -Force
+Write-Host "Agentes, hook, schema, ORQUESTACION.md y CARRILES.md instalados en $Proyecto"
 
 # Lo que el instalador no hace por su cuenta.
 $pendientes = @()

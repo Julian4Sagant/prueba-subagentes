@@ -32,7 +32,7 @@ flowchart LR
 
 - **El orquestador es la sesión principal de Claude Code**, siguiendo [ORQUESTACION.md](ORQUESTACION.md). Es el único que llama a los agentes, verifica lo que devuelven y frena en los gates.
 - **Una persona interviene solo en los gates.** Lo que el pedido no define, los agentes no lo preguntan: lo resuelven con la opción más razonable y lo dejan como **decisión pendiente** para el gate siguiente.
-- **El carril lo deciden las señales del explorador con reglas fijas**, y nunca baja. Por ejemplo, si toca un contrato, va como mínimo por COMPLETO, y si el área no tiene spec ni tests y el cambio la modifica, pasa primero por LEGACY.
+- **El carril lo deciden las señales del explorador con reglas fijas**, y nunca baja. Por ejemplo, si toca un contrato, va como mínimo por COMPLETO, y si el área no tiene spec ni tests y el cambio la modifica, pasa primero por LEGACY. Los carriles, las señales, las reglas y qué corre cada carril están en [CARRILES.md](CARRILES.md), que es la única definición.
 - Cada agente termina con un **bloque JSON** de campos fijos, que el orquestador chequea antes de seguir. Máximo 3 rondas por agente.
 
 ## Qué adapta cada agente de la skill oficial
@@ -65,7 +65,7 @@ powershell -ExecutionPolicy Bypass -File scripts\install.ps1 -Proyecto C:\ruta\a
 El instalador copia:
 - `agents/` y `hooks/` a `.claude/`.
 - El schema a `openspec/schemas/`.
-- `ORQUESTACION.md` a la raíz del proyecto.
+- `ORQUESTACION.md` y `CARRILES.md` a la raíz del proyecto.
 
 No toca `openspec/config.yaml` ni `CLAUDE.md`. Al final lista lo que falta hacer a mano:
 - En `openspec/config.yaml`: `schema: spec-driven-agentes`.
@@ -94,6 +94,7 @@ Comprueba:
 - El frontmatter de los agentes, las skills que precargan y el hook que declaran.
 - Que los bloques JSON de ejemplo parseen y traigan todos los campos que chequea el orquestador.
 - Que el schema tenga el artefacto `impacto` primero y todos sus templates.
+- Que `CARRILES.md` tenga las 8 señales y los 4 carriles, y que el explorador, el arquitecto y `ORQUESTACION.md` lo citen sin copiar la tabla de señales.
 
 CI lo corre en cada push y PR.
 
@@ -104,6 +105,7 @@ agents/        los cuatro agentes (fuente de verdad)
 schemas/       el schema spec-driven-agentes, con sus templates
 hooks/         sin-escritura.js: bloquea los comandos de git que cambian el repo
 ORQUESTACION.md  el guion que sigue la sesión principal
+CARRILES.md    carriles, señales, reglas y qué corre cada carril
 scripts/       instalador y validador
 ```
 

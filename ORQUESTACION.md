@@ -46,7 +46,8 @@ Vueltas atrás:
 
 Pasale siempre: el change-id, la ronda (cuántas veces corrió ese agente en
 este change, empezando en 1) y el feedback si lo hay. Al explorador, el pedido
-tal cual lo escribió la persona. Al arquitecto, también el carril.
+tal cual lo escribió la persona. Al arquitecto, también el carril (en LEGACY,
+el carril base).
 
 ### Qué va en el feedback
 
@@ -97,25 +98,26 @@ queda claro de dónde salió cada cambio.
    - spec-writer: `openspec validate <change-id> --strict` en verde.
    - arquitecto con `OK`: `validate --strict` en verde y `openspec status`
      con `tasks` en `done`. `design` en `done`, salvo `"design":"OMITIDO"`,
-     que solo vale en ESTANDAR: en COMPLETO, vuelve al arquitecto.
+     que solo vale si el carril (o el base, en LEGACY) es ESTANDAR: en
+     COMPLETO, vuelve al arquitecto.
      `grupos` coincide con los encabezados `## Grupo` de `tasks.md`
      (`grep "^## Grupo " tasks.md`).
 4. Si la verificación falla, volvé al mismo agente con el error como feedback.
 
 ## Carril: las señales mandan
 
-Con el JSON del explorador aplicá estas reglas, en este orden:
-1. `areaSinSpec`, `areaSinTests` y `modificaComportamiento` en `true` → LEGACY
-   primero.
-2. `tocaContrato`, `datosPersonales`, `auth` o `multiRepo` en `true` → como
-   mínimo COMPLETO.
-3. `dependencias` en `true` → como mínimo ESTANDAR. Más adelante en el flujo
-   también activa la revisión de seguridad.
-4. Si no aplica ninguna, el carril que recomendó el explorador.
+Los carriles, las señales y las reglas están en **`CARRILES.md`**, en la raíz
+del proyecto. Leelo antes de fijar el carril; no uses una versión de memoria.
 
-Nunca bajes un carril. Decile a la persona qué carril quedó y qué regla lo
-decidió. En esta prueba, ESTANDAR y COMPLETO siguen el mismo flujo. RAPIDO
-termina acá: no hay spec ni diseño.
+Con el JSON del explorador:
+1. Aplicá las reglas de "Reglas para fijar el carril", en orden. Nunca bajes
+   el carril que recomendó el explorador.
+2. En LEGACY, fijá también el **carril base**: con ese carril siguen el
+   spec-writer y el arquitecto después del baseline.
+3. Decile a la persona qué carril quedó (y el base, en LEGACY) y qué regla lo
+   decidió.
+4. Seguí la tabla "Qué corre cada carril". RAPIDO termina acá: no hay change,
+   spec ni diseño.
 
 ## Gates
 

@@ -128,6 +128,36 @@ function validarSchema(carpeta) {
 	}
 }
 
+// CARRILES.md es la única definición de señales y carriles: tiene que traer las 8 señales y los
+// 4 carriles, y el explorador y el orquestador tienen que citarlo en vez de repetir la tabla.
+function validarCarriles() {
+	const archivo = path.join(raiz, 'CARRILES.md');
+	if (!fs.existsSync(archivo)) {
+		problemas.push('CARRILES.md: falta');
+		return;
+	}
+	const texto = fs.readFileSync(archivo, 'utf8');
+	for (const s of SENALES) {
+		if (!texto.includes(`| \`${s}\` |`)) {
+			problemas.push(`CARRILES.md: falta la señal ${s} en la tabla de señales`);
+		}
+	}
+	for (const c of ['RAPIDO', 'ESTANDAR', 'COMPLETO', 'LEGACY']) {
+		if (!texto.includes(`**${c}**`)) {
+			problemas.push(`CARRILES.md: falta el carril ${c}`);
+		}
+	}
+	for (const rel of ['agents/explorador.md', 'agents/arquitecto.md', 'ORQUESTACION.md']) {
+		const otro = fs.readFileSync(path.join(raiz, rel), 'utf8');
+		if (!otro.includes('CARRILES.md')) {
+			problemas.push(`${rel}: no cita CARRILES.md`);
+		}
+		if (SENALES.some(s => otro.includes(`| \`${s}\` |`))) {
+			problemas.push(`${rel}: repite la tabla de señales; tiene que citar CARRILES.md`);
+		}
+	}
+}
+
 const carpetaAgentes = path.join(raiz, 'agents');
 const agentes = fs.readdirSync(carpetaAgentes).filter(f => f.endsWith('.md'));
 agentes.forEach(f => validarAgente(path.join(carpetaAgentes, f)));
@@ -142,6 +172,7 @@ schemas.forEach(s => validarSchema(path.join(carpetaSchemas, s)));
 if (!fs.existsSync(path.join(raiz, 'ORQUESTACION.md'))) {
 	problemas.push('ORQUESTACION.md: falta');
 }
+validarCarriles();
 
 if (problemas.length) {
 	console.error(problemas.map(p => `- ${p}`).join('\n'));

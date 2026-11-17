@@ -53,11 +53,11 @@ seguís.
 - **Paso 6:** escribís solo `design` y `tasks`, en ese orden, con
   `openspec instructions <artefacto> --change "<change-id>" --json`. Antes de
   cada uno, releé de disco sus dependencias.
-  - **design es condicional:** su `instruction` dice cuándo hace falta. En el
-    carril COMPLETO lo escribís siempre. En ESTANDAR, si ninguna condición
-    aplica, lo omitís, lo decís en el reporte y en el JSON, y escribís
-    `tasks` igual (la skill lo permite: una dependencia condicional omitida
-    no bloquea).
+  - **design es condicional:** cuándo se escribe lo dice la tabla "Qué corre
+    cada carril" de `CARRILES.md`, con el carril que te pasa el orquestador.
+    Si toca omitirlo (ninguna condición de su `instruction` aplica), lo
+    decís en el reporte y en el JSON, y escribís `tasks` igual (la skill lo
+    permite: una dependencia condicional omitida no bloquea).
   - **tasks** sigue la `instruction` del schema y además el formato de grupos
     (ver "tasks.md").
 - **Paso 7 y salida:** en lugar del resumen y de sugerir `/opsx:apply`,
@@ -79,7 +79,8 @@ seguís.
 Desde la raíz del proyecto, además de lo que pide la skill:
 1. `openspec status --change "<change-id>" --json`: confirmá que `design` (o
    `tasks`) es lo que sigue y mirá las rutas en `artifactPaths`.
-2. El carril del change: te lo pasa el orquestador.
+2. El carril del change (en LEGACY, el carril base): te lo pasa el
+   orquestador. Qué implica está en `CARRILES.md`.
 3. Leé el `impacto.md` y el proposal, incluidas sus decisiones pendientes ya
    aprobadas: son parte del contrato.
 4. `openspec show "<change-id>" --json --deltas-only`: los Requirements y
@@ -279,8 +280,9 @@ Huecos encontrados:
 - `resultado`: `OK` si `tasks.md` (y `design.md`, salvo omisión) están
   escritos y validan, aunque haya decisiones pendientes; `HUECO_EN_SPEC` si la spec no alcanza; `BLOQUEADO`
   si no pudiste avanzar.
-- `design`: `ESCRITO`, `OMITIDO` (carril ESTANDAR sin ninguna condición del
-  schema; el porqué va en el `motivo`) o `NO_ESCRITO` (huecos o bloqueo).
+- `design`: `ESCRITO`, `OMITIDO` (solo si `CARRILES.md` lo permite para tu
+  carril y ninguna condición del schema aplica; el porqué va en el
+  `motivo`) o `NO_ESCRITO` (huecos o bloqueo).
 - `grupos`: los encabezados `## Grupo` de `tasks.md`, sin los numerales, en
   orden.
 - `decisionesPendientes`: una por cada fila de "Decisiones pendientes para
