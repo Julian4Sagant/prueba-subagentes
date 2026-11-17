@@ -19,7 +19,7 @@ respuesta) en estos casos:
 - un gate (Validar baseline, Aprobar spec, Aprobar diseño);
 - un `YA_CUMPLE`;
 - un `BLOQUEADO`;
-- el tope de 3 rondas.
+- un tope: 3 correcciones de un agente o 3 vueltas por hueco (ver "Topes y escaladas").
 
 En cualquier otro momento, terminado un agente y verificado su resultado,
 seguí con el paso siguiente sin avisar ni esperar. Contarle a la persona qué
@@ -227,6 +227,11 @@ En cada gate frená y mostrale a la persona:
   Scenarios de borde tengan valores concretos (no "un tramo de espacios",
   sino el valor exacto o cómo construirlo) y que los caracteres invisibles
   estén escritos por su código (`U+00A0`): si no, anotalo como observación.
+  Si observás que falta un borde de un campo de entrada, no nombres solo el
+  caso que viste: recorré la misma lista que usa el spec-writer (ausente,
+  `null`, vacío, blancos que no son `U+0020`, número, booleano, objeto,
+  array, bordes de largo) y nombrá todas las clases que faltan, en una sola
+  observación.
 
 ### Diff entre rondas
 
@@ -269,14 +274,24 @@ spec-writer del change funcional.
 
 ## Topes y escaladas
 
-- Máximo **3 rondas** por agente en el mismo change. Si se llega al tope,
-  frená y explicale a la persona qué pasó en cada ronda.
 - **Qué es una ronda:** cada vez que llamás a un agente y puede cambiar sus
   artefactos, sea por un rechazo en el gate, por un hueco del arquitecto o del
-  planner, o por
-  tu verificación (validate, verificación cruzada). La única vuelta que no
-  cuenta es el reintento para completar el JSON, porque ahí el agente no toca
-  archivos. Llevá la cuenta por agente y decí siempre en qué ronda va.
+  planner, o por tu verificación (validate, verificación cruzada). La única
+  vuelta que no es ronda es el reintento para completar el JSON, porque ahí el
+  agente no toca archivos. Las rondas se numeran por agente (ronda 1, 2, 3…)
+  y con ese número se guardan las copias para el diff.
+- **Tope por agente: 3 correcciones.** Cuentan los rechazos de la persona en
+  un gate y tus devoluciones por verificación: son las vueltas en que el
+  agente se equivocó o no convenció. Al llegar al tope, frená y explicale a
+  la persona qué pasó en cada ronda.
+- **Tope de huecos: 2 vueltas por change.** Una vuelta por hueco
+  (`HUECO_EN_SPEC` del arquitecto o `HUECO_EN_DISENO` del planner) no cuenta
+  para el tope de ningún agente: que un agente detecte lo que falta es el
+  flujo funcionando, no un error. Pero tiene su propio tope, para que no se
+  vuelva un ida y vuelta: a la tercera vuelta por hueco en el mismo change,
+  frená y explicale a la persona qué huecos aparecieron y por qué.
+- Decí siempre en qué ronda va cada agente y cuántas correcciones y vueltas
+  por hueco lleva.
 - **Cuando devolvés por verificación, acotá el pedido:** decile al agente qué
   ítem concreto falló y que corrija **solo eso**, sin tocar el resto ni sumar
   alcance. Una devolución por un detalle no es una invitación a reescribir.
