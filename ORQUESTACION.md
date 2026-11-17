@@ -19,7 +19,8 @@ respuesta) en estos casos:
 - un gate (Validar baseline, Aprobar spec, Aprobar diseño);
 - un `YA_CUMPLE`;
 - un `BLOQUEADO`;
-- un tope: 3 correcciones de un agente o 3 vueltas por hueco (ver "Topes y escaladas").
+- un tope: haría falta una cuarta corrección de un agente o una tercera vuelta
+  por hueco (ver "Topes y escaladas").
 
 En cualquier otro momento, terminado un agente y verificado su resultado,
 seguí con el paso siguiente sin avisar ni esperar. Contarle a la persona qué
@@ -59,9 +60,29 @@ commit del branch. Este tramo no los ejecuta.
 
 Vueltas atrás:
 - Aprobar spec rechazada → spec-writer, con el comentario como feedback.
-- Arquitecto devuelve `HUECO_EN_SPEC` → spec-writer, con los Scenarios
-  propuestos como feedback. La aprobación de la spec se anula: vuelve a pasar
-  por Aprobar spec.
+- Arquitecto devuelve `HUECO_EN_SPEC` → primero filtrá los huecos (ver
+  abajo); los que quedan van al spec-writer, con los Scenarios propuestos
+  como feedback. La aprobación de la spec se anula: vuelve a pasar por
+  Aprobar spec.
+
+### Filtrar los huecos antes de mandarlos
+
+Un hueco solo es hueco si es comportamiento que este change **introduce o
+modifica**. Antes de pasarle los huecos al spec-writer, revisá cada uno contra
+"What Changes" y "Contratos afectados" del proposal aprobado y contra los
+Requirements `ADDED` y `MODIFIED`:
+- **Si el change lo toca:** va al spec-writer tal cual.
+- **Si el change no lo toca** (lo resuelve el framework, el lector JSON o la
+  infraestructura, y sigue como hoy): no lo mandes. Lo mostrás en el gate de
+  Aprobar spec, en "Observaciones del orquestador", con el Scenario que
+  proponía el arquitecto y por qué no lo mandaste. La persona decide si lo
+  suma a su comentario.
+
+Si todos los huecos quedaron filtrados, no hay ronda del spec-writer ni se
+anula la aprobación: volvé al arquitecto por verificación ("estos huecos no
+son del change: tratalos como riesgo y escribí el design"), que cuenta como
+corrección suya. Una vuelta en la que al menos un hueco pasa el filtro cuenta
+como vuelta por hueco.
 - Aprobar diseño rechazada → arquitecto, con el comentario como feedback.
 - Planner devuelve `HUECO_EN_DISENO` → arquitecto, con los huecos como
   feedback. Si el design cambia (o se escribe uno que se había omitido),
@@ -71,9 +92,10 @@ Vueltas atrás:
 ## Cómo llamar a cada agente
 
 Pasale siempre: el change-id, la ronda (cuántas veces corrió ese agente en
-este change, empezando en 1) y el feedback si lo hay. Al explorador, el pedido
-tal cual lo escribió la persona. Al arquitecto y al planner, también el carril
-(en LEGACY, el carril base).
+este change, empezando en 1) y el feedback si lo hay. Además:
+- al explorador, el pedido tal cual lo escribió la persona;
+- al arqueólogo, la capability (el baseline va a ser `baseline-<capability>`);
+- al arquitecto y al planner, el carril (en LEGACY, el carril base).
 
 ### Qué va en el feedback
 
@@ -280,16 +302,18 @@ spec-writer del change funcional.
   vuelta que no es ronda es el reintento para completar el JSON, porque ahí el
   agente no toca archivos. Las rondas se numeran por agente (ronda 1, 2, 3…)
   y con ese número se guardan las copias para el diff.
-- **Tope por agente: 3 correcciones.** Cuentan los rechazos de la persona en
-  un gate y tus devoluciones por verificación: son las vueltas en que el
-  agente se equivocó o no convenció. Al llegar al tope, frená y explicale a
-  la persona qué pasó en cada ronda.
-- **Tope de huecos: 2 vueltas por change.** Una vuelta por hueco
+- **Tope por agente: hasta 3 correcciones.** Cuentan los rechazos de la
+  persona en un gate y tus devoluciones por verificación: son las vueltas en
+  que el agente se equivocó o no convenció. La tercera corrección se hace;
+  si haría falta una **cuarta**, no la lances: frená y explicale a la persona
+  qué pasó en cada ronda.
+- **Tope de huecos: hasta 2 vueltas por change.** Una vuelta por hueco
   (`HUECO_EN_SPEC` del arquitecto o `HUECO_EN_DISENO` del planner) no cuenta
   para el tope de ningún agente: que un agente detecte lo que falta es el
   flujo funcionando, no un error. Pero tiene su propio tope, para que no se
-  vuelva un ida y vuelta: a la tercera vuelta por hueco en el mismo change,
-  frená y explicale a la persona qué huecos aparecieron y por qué.
+  vuelva un ida y vuelta: la segunda vuelta se hace; si haría falta una
+  **tercera**, no la lances: frená y explicale a la persona qué huecos
+  aparecieron y por qué.
 - Decí siempre en qué ronda va cada agente y cuántas correcciones y vueltas
   por hueco lleva.
 - **Cuando devolvés por verificación, acotá el pedido:** decile al agente qué

@@ -156,6 +156,9 @@ persona lo saque explícitamente de la lista.
     `U+00A0`, saltos de línea);
   - otro tipo JSON: número, booleano, objeto, array;
   - los bordes del largo o del formato (el justo, uno menos, uno más).
+  El checklist es sobre los valores del campo. No incluye los límites del
+  lector JSON ni del framework (largo máximo de un número, profundidad,
+  claves repetidas): eso no lo cambia el change y no va a la spec.
   Si el Requirement dice "MUST ser X" (texto, un número, un formato), tiene
   que haber un Scenario por cada clase de valor que no es X, no solo por la
   primera que se te ocurra. Si una clase no aplica (por ejemplo, el campo es
@@ -191,6 +194,16 @@ persona lo saque explícitamente de la lista.
 - Atendé **cada punto** del feedback. Si es un hueco del arquitecto, suele
   venir redactado como Scenario propuesto: revisalo, ajustalo al estilo de la
   spec y agregalo donde corresponda.
+- **Antes de convertir un hueco en Scenario, preguntate si este change
+  modifica ese comportamiento.** Si no lo modifica (lo resuelve el framework,
+  el lector JSON o la infraestructura, y sigue igual que hoy), no va a la
+  spec: anotalo en "Fuera de alcance" como "sin cambios, responde como hoy" y
+  decilo en el reporte. Copiar el THEN del arquitecto sin esta pregunta lleva
+  a la spec comportamiento que nadie pidió.
+- **En una ronda de corrección no sumás Scenarios que nadie pidió.** Ni por
+  el checklist de bordes: si al aplicar el feedback creés que falta un borde
+  nuevo, proponelo como decisión pendiente y que lo decida la persona. Lo que
+  sí hacés es dejar coherente lo que ya estaba (ver abajo).
 - **No reescribas lo que no se pidió.** La persona va a volver a revisar, y un
   diff chico se revisa bien; uno grande se aprueba sin leer.
 - **Pero dejá el proposal coherente.** Después de aplicar el feedback, releé

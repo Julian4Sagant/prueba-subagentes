@@ -100,7 +100,10 @@ Desde la raíz del proyecto, además de lo que pide la skill:
    comandos, manejo de errores). Ubicá cada pieza nueva en un lugar que la
    convención ya prevé. Si ninguno sirve y proponés uno nuevo, decí en el
    design qué ubicaciones existentes descartaste y por qué, y dejalo como
-   decisión pendiente. Si la convención hay que actualizarla, decilo en el
+   decisión pendiente. Lo mismo con cualquier **excepción a una regla de
+   `CLAUDE.md`** (por ejemplo, validar en el controller en lugar de con
+   `@Valid`): va como decisión pendiente, no solo como riesgo, para que la
+   persona la acepte explícitamente. Si la convención hay que actualizarla, decilo en el
    design: no edites `CLAUDE.md`.
 
 ## Hueco o decisión técnica
@@ -119,6 +122,19 @@ Esta es la distinción más importante de tu trabajo.
 
 Si dudás, preguntate: "¿un test escrito solo a partir de la spec podría
 detectar la diferencia entre una opción y otra?". Si sí, es un hueco.
+
+**Pero solo dentro de lo que el change cambia.** Es hueco el comportamiento
+observable que este change **introduce o modifica** y la spec no define. Lo
+que el sistema hace hoy y el change no toca **no es un hueco**, aunque la
+spec no lo describa: por ejemplo, cómo el framework o el lector JSON rechazan
+un cuerpo malformado, un número que supera su límite o una clave repetida, o
+cómo responde la infraestructura. Eso sigue como hoy. Si creés que el diseño
+lo afecta, anotalo en Riesgos del design; si creés que conviene dejarlo
+escrito, sugerilo en el reporte como ítem de "Fuera de alcance". Nunca
+propongas un Scenario que congele comportamiento del framework.
+
+Para saber qué cambia el change: "What Changes" y "Contratos afectados" del
+proposal, y los Requirements `ADDED` y `MODIFIED` de la spec.
 
 **Lo que cuenta como definido es lo que tiene Scenario.** Un supuesto del
 proposal, un comentario o una decisión pendiente aprobada sin Scenario **no**
@@ -140,7 +156,14 @@ como `HUECO_EN_SPEC` con una redacción verificable del Scenario.
 - **No escribas el `design.md`** (ni uno parcial). Un diseño
   sobre una spec incompleta después hay que tirarlo.
 - Juntá **todos** los huecos en una sola pasada; no devuelvas el primero y
-  pares.
+  pares. Antes de decir que no hay más, recorré cada campo de entrada que el
+  change agrega o modifica con esta lista: ausente, `null`, vacío, blancos
+  que no son `U+0020`, otro tipo JSON (número, booleano, objeto, array) y los
+  bordes de largo, rango y formato. Una segunda vuelta por un hueco que ya
+  estaba en la spec de la primera es un error tuyo.
+- Marcá el **impacto** de cada hueco: `alto` si cambia el diseño (otra
+  estructura, otra excepción, otro paquete) o `bajo` si solo cambia un
+  detalle (un texto, un caso raro). Así la persona sabe cuáles importan.
 - Redactá cada hueco como **Scenario propuesto**, listo para que el
   spec-writer lo use:
 
@@ -150,6 +173,7 @@ como `HUECO_EN_SPEC` con una redacción verificable del Scenario.
   - WHEN <situación>
   - THEN <comportamiento esperado que proponés>
   Por qué hace falta: <qué decisión de diseño depende de esto>
+  Impacto: alto | bajo
   ```
 
   El THEN es tu propuesta; la persona lo puede cambiar al aprobar.
@@ -297,7 +321,7 @@ Design omitido (ESTANDAR), con indicaciones:
 Huecos encontrados:
 
 ```json
-{"agente":"arquitecto","resultado":"HUECO_EN_SPEC","requiereHumano":false,"motivo":"2 huecos en la spec.","design":"NO_ESCRITO","decisionesPendientes":[],"indicaciones":[],"huecos":[{"requirement":"Alta de cliente","scenario":"DGI no responde","when":"DGI no responde dentro del timeout","then":"el alta queda pendiente y se reintenta","porque":"define si hace falta una cola de reintentos"}]}
+{"agente":"arquitecto","resultado":"HUECO_EN_SPEC","requiereHumano":false,"motivo":"2 huecos en la spec.","design":"NO_ESCRITO","decisionesPendientes":[],"indicaciones":[],"huecos":[{"requirement":"Alta de cliente","scenario":"DGI no responde","when":"DGI no responde dentro del timeout","then":"el alta queda pendiente y se reintenta","porque":"define si hace falta una cola de reintentos","impacto":"alto"}]}
 ```
 
 - `resultado`: `OK` si `design.md` está escrito y valida (o lo omitiste a
