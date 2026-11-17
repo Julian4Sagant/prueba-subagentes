@@ -13,6 +13,11 @@ archivos lo citan sin repetirlo. Si cambiás una regla, cambiala acá.
 | **COMPLETO** | Contratos, datos personales, auth, varios repos o lógica crítica. | Igual que ESTANDAR, pero el design se escribe siempre. |
 | **LEGACY** | El área no tiene spec ni tests y el cambio modifica comportamiento. | Primero el baseline: arqueologo-legacy → Validar baseline → archivar. Después sigue por su **carril base** (ver abajo). |
 
+**Sin carril:** si el explorador comprueba que el pedido ya se cumple (código
+y test que lo cubren), devuelve `YA_CUMPLE` y no hay carril ni change. No es
+RAPIDO: RAPIDO implementa algo, y acá no hay nada que implementar. Qué hace el
+orquestador en ese caso está en `ORQUESTACION.md`.
+
 ## Señales
 
 Las detecta el explorador y las devuelve en su JSON, cada una con evidencia en

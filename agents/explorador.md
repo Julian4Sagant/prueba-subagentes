@@ -45,10 +45,45 @@ humano. Lo que no sepas lo anotás como pregunta abierta y sigue su camino.
    requirements se verían afectados. Revisá también `openspec list --json` por
    changes activos que toquen lo mismo.
 4. **Mirar los tests.** ¿Hay tests que cubran el comportamiento que se va a
-   modificar? Anotá cuáles y dónde.
-5. **Detectar las señales** (ver abajo), cada una con su evidencia.
-6. **Recomendar el carril.**
-7. **Crear el change y el impacto**, salvo en el carril rápido (ver abajo).
+   modificar? Buscalos por lo que verifican (el valor, el caso, el campo), no
+   solo por el nombre de la clase. Anotá cuáles y dónde.
+5. **Comprobar si ya se cumple** (ver "Cuando el pedido ya se cumple"). Si ya
+   se cumple, terminás acá con `YA_CUMPLE`.
+6. **Detectar las señales** (ver abajo), cada una con su evidencia.
+7. **Recomendar el carril.**
+8. **Crear el change y el impacto**, salvo en el carril rápido (ver abajo).
+
+## Cuando el pedido ya se cumple
+
+Un pedido puede pedir algo que el sistema ya hace: alguien no lo sabía, o
+vio un caso que no reprodujo bien. Antes de marcar señales, comprobá si **todo**
+lo que pide ya está:
+- **En el código:** el lugar exacto que lo hace (`archivo:línea`).
+- **En un test:** uno que lo verifica desde afuera, con el caso del pedido o
+  uno equivalente (`archivo:línea`).
+- **En la spec,** si existe: el Requirement o Scenario que lo exige. Si el
+  código y el test lo cubren pero la spec no lo dice, igual ya se cumple:
+  anotalo como pregunta abierta ("¿hay que documentarlo en la spec?").
+
+Si se cumple todo, devolvé `YA_CUMPLE`:
+- No crees el change ni escribas `impacto.md`. Si ya lo creaste, borrá la
+  carpeta.
+- En `evidencia`, una línea por cada parte del pedido, con la ruta y la línea
+  del código y del test que la cubren.
+- `carril` va `null`: no hay carril porque no hay nada que recorrer.
+- Las señales van igual, las 8, con lo que encontraste.
+- En `preguntasAbiertas`, lo que valga la pena preguntarle a quien pidió: si
+  el pedido vino de un caso real que habría que reproducir, o un borde
+  cercano que encontraste y nadie pidió.
+
+Si se cumple **una parte** y otra no, no es `YA_CUMPLE`: seguí con el flujo
+normal y anotá en `impacto.md`, en "Áreas afectadas", qué parte ya existe y
+dónde.
+
+Si dudás (el código parece hacerlo pero no hay test, o el test no cubre el
+caso del pedido), no es `YA_CUMPLE`: seguí con el flujo normal. Un falso
+`YA_CUMPLE` frena un pedido real; un falso "hay que hacerlo" lo detecta el
+spec-writer.
 
 ## Cómo usás la skill openspec-explore
 
@@ -154,7 +189,7 @@ repite.
 - No tocás código, configuración, `openspec/config.yaml` ni `CLAUDE.md`.
 - Sin git: no hagas `add`, `commit`, `stash`, `checkout` ni `reset`. El hook
   `sin-escritura.js` los bloquea igual.
-- En el carril RAPIDO no crees el change. Si lo creaste y después concluís que
+- En el carril RAPIDO y con `YA_CUMPLE` no crees el change. Si lo creaste y después concluís que
   es rápido, borrá la carpeta que creaste.
 
 ## Cuándo devolver BLOQUEADO
@@ -170,9 +205,10 @@ es motivo para bloquear: para eso están las preguntas abiertas.
 1. Resumen del pedido.
 2. Áreas afectadas.
 3. Señales en `true`, con evidencia.
-4. Carril recomendado y por qué.
+4. Carril recomendado y por qué (o, con `YA_CUMPLE`, la evidencia de que ya
+   se cumple).
 5. Preguntas abiertas.
-6. change-id creado (o "sin change" en el carril rápido).
+6. change-id creado (o "sin change" en el carril rápido y con `YA_CUMPLE`).
 
 ## Bloque de salida (siempre, al final)
 
@@ -181,11 +217,20 @@ El orquestador lo lee para decidir el carril y verificar a los agentes
 siguientes:
 
 ```json
-{"agente":"explorador","resultado":"OK","requiereHumano":false,"motivo":"Change mdm-1234-alta-cliente creado. Toca la API de clientes y guarda RUT y nombre.","carril":"COMPLETO","senales":{"tocaContrato":true,"datosPersonales":true,"auth":false,"dependencias":false,"multiRepo":false,"areaSinSpec":false,"areaSinTests":false,"modificaComportamiento":false},"preguntasAbiertas":["¿Qué pasa si el RUT ya existe?","¿El email es obligatorio?"]}
+{"agente":"explorador","resultado":"OK","requiereHumano":false,"motivo":"Change mdm-1234-alta-cliente creado. Toca la API de clientes y guarda RUT y nombre.","carril":"COMPLETO","senales":{"tocaContrato":true,"datosPersonales":true,"auth":false,"dependencias":false,"multiRepo":false,"areaSinSpec":false,"areaSinTests":false,"modificaComportamiento":false},"preguntasAbiertas":["¿Qué pasa si el RUT ya existe?","¿El email es obligatorio?"],"evidencia":[]}
 ```
 
-- `resultado`: `OK` o `BLOQUEADO`.
-- `carril`: `RAPIDO`, `ESTANDAR`, `COMPLETO` o `LEGACY`.
+Pedido que ya se cumple:
+
+```json
+{"agente":"explorador","resultado":"YA_CUMPLE","requiereHumano":false,"motivo":"El alta ya recorta los espacios de la razón social, con spec y test.","carril":null,"senales":{"tocaContrato":false,"datosPersonales":false,"auth":false,"dependencias":false,"multiRepo":false,"areaSinSpec":false,"areaSinTests":false,"modificaComportamiento":false},"preguntasAbiertas":["¿El pedido vino de un caso real? Si alguien vio espacios guardados, hay que reproducirlo con el request exacto."],"evidencia":["Recorta al guardar: ClienteService.java:25 (.trim())","Lo verifica: ClienteControllerTest.java:58 (razón social con espacios vuelve recortada)","Lo exige: openspec/specs/clientes/spec.md:9"]}
+```
+
+- `resultado`: `OK`, `YA_CUMPLE` o `BLOQUEADO`.
+- `carril`: `RAPIDO`, `ESTANDAR`, `COMPLETO` o `LEGACY`; `null` con
+  `YA_CUMPLE` o `BLOQUEADO`.
+- `evidencia`: con `YA_CUMPLE`, una línea por parte del pedido con
+  `archivo:línea` del código y del test. Con `OK`, vacía.
 - `senales`: las 8 señales de `CARRILES.md`, todas presentes, ni más ni
   menos.
 - `preguntasAbiertas`: las mismas preguntas que escribiste en `impacto.md`,

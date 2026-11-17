@@ -14,7 +14,9 @@ const path = require('path');
 
 const raiz = path.resolve(__dirname, '..');
 const MODELOS = ['haiku', 'sonnet', 'opus'];
-const RESULTADOS = ['OK', 'HUECO_EN_SPEC', 'BLOQUEADO'];
+// Resultados que puede devolver cada agente; los que no están en la lista devuelven OK o BLOQUEADO.
+const RESULTADOS_PROPIOS = { 'explorador': ['YA_CUMPLE'], 'arquitecto': ['HUECO_EN_SPEC'] };
+const resultadosDe = agente => ['OK', 'BLOQUEADO', ...(RESULTADOS_PROPIOS[agente] || [])];
 
 const problemas = [];
 
@@ -134,8 +136,8 @@ function validarAgente(archivo) {
 		if (json.agente !== base) {
 			problemas.push(`${rel}: el JSON de ejemplo ${i + 1} dice agente "${json.agente}"`);
 		}
-		if (!RESULTADOS.includes(json.resultado)) {
-			problemas.push(`${rel}: resultado "${json.resultado}" desconocido`);
+		if (!resultadosDe(base).includes(json.resultado)) {
+			problemas.push(`${rel}: resultado "${json.resultado}" no es uno de ${resultadosDe(base).join(', ')}`);
 		}
 		if (json.senales) {
 			const claves = Object.keys(json.senales).sort().join();

@@ -11,6 +11,8 @@ corresponde.
 ```
 pedido → explorador → [LEGACY: arqueologo-legacy → GATE Validar baseline → archivar]
        → spec-writer → GATE Aprobar spec → arquitecto → GATE Aprobar diseño → fin del tramo
+
+pedido → explorador con YA_CUMPLE → verificar la evidencia → mostrarla → fin (sin carril)
 ```
 
 ### Fases de OpenSpec
@@ -73,7 +75,7 @@ queda claro de dónde salió cada cambio.
    | Agente | Campos obligatorios |
    | --- | --- |
    | todos | `agente`, `resultado`, `requiereHumano`, `motivo` |
-   | explorador | `carril`, `senales` (con las 8 señales), `preguntasAbiertas` |
+   | explorador | `carril`, `senales` (con las 8 señales), `preguntasAbiertas`, `evidencia` |
    | arqueologo-legacy | `aRevisar`, `noDeterminado` |
    | spec-writer | `decisionesPendientes` |
    | arquitecto | `design`, `grupos`, `decisionesPendientes` (con `OK`), `huecos` (con `HUECO_EN_SPEC`) |
@@ -91,8 +93,9 @@ queda claro de dónde salió cada cambio.
      el reporte del spec-writer, como resuelta en la spec o como decisión
      pendiente.
 3. Verificá por tu cuenta:
-   - explorador: `openspec status --change <change-id> --json` muestra
-     `impacto` en `done` (salvo carril RAPIDO, donde no hay change).
+   - explorador con `OK`: `openspec status --change <change-id> --json`
+     muestra `impacto` en `done` (salvo carril RAPIDO, donde no hay change).
+   - explorador con `YA_CUMPLE`: ver "Cuando el pedido ya se cumple".
    - arqueologo-legacy: `openspec validate baseline-<capability> --strict` en
      verde y los tests de caracterización pasan.
    - spec-writer: `openspec validate <change-id> --strict` en verde.
@@ -103,6 +106,31 @@ queda claro de dónde salió cada cambio.
      `grupos` coincide con los encabezados `## Grupo` de `tasks.md`
      (`grep "^## Grupo " tasks.md`).
 4. Si la verificación falla, volvé al mismo agente con el error como feedback.
+
+## Cuando el pedido ya se cumple
+
+Si el explorador devuelve `YA_CUMPLE`, no hay carril ni change: las reglas
+de `CARRILES.md` no se aplican. Antes de creerle, verificá:
+1. **Cada línea de `evidencia`:** abrí el `archivo:línea` citado y comprobá
+   que haga o verifique lo que dice. Si el proyecto tiene un comando de tests
+   (`CLAUDE.md`), corré solo los tests citados.
+2. **Que no quedó un change:** `openspec list --json` no muestra uno nuevo.
+
+Si algo de la evidencia no se sostiene, volvé al explorador con lo que
+encontraste como feedback: cuenta como ronda, y la respuesta puede pasar a
+`OK` con un carril.
+
+Si se sostiene, frená y mostrale a la persona:
+- Que el pedido ya se cumple, con la evidencia y lo que verificaste.
+- Las `preguntasAbiertas`, una por una (por ejemplo, si el pedido vino de un
+  caso real que habría que reproducir).
+
+Esperá su respuesta, como en un gate:
+- Si confirma, termina el tramo sin change.
+- Si dice que falta algo, volvé al explorador con su comentario **textual**
+  como feedback (cuenta como ronda).
+- Si lo que propone es otra cosa (por ejemplo, un borde que encontró el
+  explorador), es un pedido nuevo: decile que lo pase con `/pedido`.
 
 ## Carril: las señales mandan
 
