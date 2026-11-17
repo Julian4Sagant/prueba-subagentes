@@ -3,6 +3,7 @@
 #
 # Los agentes van al proyecto y no a ~/.claude, porque el hook se resuelve con $CLAUDE_PROJECT_DIR.
 # No toca openspec/config.yaml ni CLAUDE.md: al final dice qué falta configurar a mano.
+# Las rutas usan '/' para que corra igual en Windows PowerShell y en pwsh de Linux (CI).
 param([Parameter(Mandatory)][string]$Proyecto)
 
 $ErrorActionPreference = 'Stop'
@@ -15,23 +16,23 @@ if (-not (Test-Path (Join-Path $Proyecto 'openspec') -PathType Container)) {
 
 $raiz = Split-Path -Parent $PSScriptRoot
 $claude = Join-Path $Proyecto '.claude'
-$schemas = Join-Path $Proyecto 'openspec\schemas'
+$schemas = Join-Path $Proyecto 'openspec/schemas'
 New-Item -ItemType Directory -Force -Path (Join-Path $claude 'agents'), (Join-Path $claude 'hooks'), $schemas | Out-Null
 
-Copy-Item (Join-Path $raiz 'agents\*.md') (Join-Path $claude 'agents') -Force
-Copy-Item (Join-Path $raiz 'hooks\*.js') (Join-Path $claude 'hooks') -Force
-Copy-Item (Join-Path $raiz 'schemas\*') $schemas -Recurse -Force
+Copy-Item (Join-Path $raiz 'agents/*.md') (Join-Path $claude 'agents') -Force
+Copy-Item (Join-Path $raiz 'hooks/*.js') (Join-Path $claude 'hooks') -Force
+Copy-Item (Join-Path $raiz 'schemas/*') $schemas -Recurse -Force
 Copy-Item (Join-Path $raiz 'ORQUESTACION.md'), (Join-Path $raiz 'CARRILES.md') $Proyecto -Force
 Write-Host "Agentes, hook, schema, ORQUESTACION.md y CARRILES.md instalados en $Proyecto"
 
 # Lo que el instalador no hace por su cuenta.
 $pendientes = @()
 foreach ($skill in 'openspec-explore', 'openspec-propose', 'openspec-update-change') {
-	if (-not (Test-Path (Join-Path $claude "skills\$skill\SKILL.md"))) {
+	if (-not (Test-Path (Join-Path $claude "skills/$skill/SKILL.md"))) {
 		$pendientes += "Falta la skill $skill. Corré: openspec init --tools claude (o openspec update)"
 	}
 }
-$config = Join-Path $Proyecto 'openspec\config.yaml'
+$config = Join-Path $Proyecto 'openspec/config.yaml'
 if (-not (Test-Path $config) -or -not (Select-String -Path $config -Pattern '^schema:\s*spec-driven-agentes\s*$' -Quiet)) {
 	$pendientes += 'openspec/config.yaml no usa el schema: poné "schema: spec-driven-agentes"'
 }

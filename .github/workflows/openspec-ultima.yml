@@ -1,0 +1,30 @@
+name: OpenSpec última versión
+
+# Corre los chequeos de la CLI contra la última versión publicada de OpenSpec, para enterarse
+# antes de actualizar si una versión nueva renumera un paso de una skill o rompe el schema.
+# No bloquea nada: si falla, revisá los prompts y después corré
+# node scripts/verificar-skills.js --openspec --actualizar con la versión nueva.
+
+on:
+  schedule:
+    - cron: '0 11 * * 1'
+  workflow_dispatch:
+
+jobs:
+  openspec-ultima:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar la última versión de OpenSpec
+        run: npm install -g @fission-ai/openspec@latest && openspec --version
+
+      - name: Pasos y secciones de las skills oficiales
+        run: node scripts/verificar-skills.js --openspec
+
+      - name: Prueba de punta a punta
+        run: node scripts/humo.js

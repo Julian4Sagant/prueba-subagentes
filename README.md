@@ -86,17 +86,21 @@ El orquestador corre el explorador, decide el carril y frena en cada gate. Para 
 
 ## Validación
 
-```bash
-node scripts/validar.js
-```
+| Comando | Qué comprueba | Necesita |
+|---|---|---|
+| `node scripts/validar.js` | Frontmatter, skills y hook de cada agente; schema con `impacto` primero y sus templates; `CARRILES.md` con las señales y los 4 carriles, citado y no copiado; y que el JSON de ejemplo de cada agente traiga **exactamente** los campos de la tabla "Campos obligatorios" de `ORQUESTACION.md` y las señales de `CARRILES.md`. | Node |
+| `node scripts/verificar-skills.js` | Que cada paso ("Paso 6") y sección ("Check for context") de una skill oficial que citan los agentes esté registrado en `scripts/skills-referenciadas.json`. | Node |
+| `node --test scripts/test-hook.js` | Que `sin-escritura.js` bloquee `git commit`, `push`, `reset`, `checkout` y similares, y deje pasar `openspec`, `git status` y `git diff`. | Node |
+| `node scripts/verificar-skills.js --openspec` | Que esos pasos y secciones sigan existiendo, con el mismo título, en las skills que genera la CLI instalada. | OpenSpec |
+| `node scripts/humo.js` | De punta a punta, en un proyecto temporal: `openspec init`, el instalador y su lista de pendientes, `openspec schema validate`, un change que arranca por `impacto` y valida sin design, el apply leyendo los `## Grupo N:`, y un baseline que valida y se archiva. | OpenSpec y PowerShell |
 
-Comprueba:
-- El frontmatter de los agentes, las skills que precargan y el hook que declaran.
-- Que los bloques JSON de ejemplo parseen y traigan todos los campos que chequea el orquestador.
-- Que el schema tenga el artefacto `impacto` primero y todos sus templates.
-- Que `CARRILES.md` tenga las 8 señales y los 4 carriles, y que el explorador, el arquitecto y `ORQUESTACION.md` lo citen sin copiar la tabla de señales.
+CI corre todo en cada push y PR, con la versión de OpenSpec registrada en `skills-referenciadas.json`. Un workflow semanal (`openspec-ultima.yml`) corre los chequeos de la CLI contra la última versión de OpenSpec, para enterarse antes de actualizar.
 
-CI lo corre en cada push y PR.
+### Actualizar OpenSpec
+
+1. Corré `node scripts/verificar-skills.js --openspec` con la versión nueva instalada. Si falla, revisá cada paso o sección que cambió y ajustá los prompts de los agentes.
+2. Corré `node scripts/verificar-skills.js --openspec --actualizar`: registra los títulos nuevos y la versión, que es la que va a usar CI.
+3. Corré `node scripts/humo.js`.
 
 ## Contenido
 
@@ -106,7 +110,8 @@ schemas/       el schema spec-driven-agentes, con sus templates
 hooks/         sin-escritura.js: bloquea los comandos de git que cambian el repo
 ORQUESTACION.md  el guion que sigue la sesión principal
 CARRILES.md    carriles, señales, reglas y qué corre cada carril
-scripts/       instalador y validador
+scripts/       instalador, validador, verificación de las skills, tests del hook y prueba de humo
+pruebas/humo/  fixtures de la prueba de humo: un change y un baseline mínimos
 ```
 
 ## Licencias
