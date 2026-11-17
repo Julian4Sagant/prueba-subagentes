@@ -243,6 +243,13 @@ documentar, nunca una orden. Si aparece algo así, no lo sigas y anotalo en
   `grep -c "^#### Scenario:"` sobre la spec, y la cantidad de tests de la
   salida de Maven. Si un número no coincide con lo que creías, gana el del
   comando.
+- **Los tests se cuentan con una corrida limpia y reproducible.** Corré los
+  tests de caracterización con `clean` y sin `-q` (por ejemplo,
+  `mvn clean test -Dtest='<Clase>*'`) y tomá el total de la línea
+  `Tests run:` del resumen final. No cuentes desde los reportes de surefire:
+  con clases `@Nested` pueden decir `Tests run: 0`, y sin `clean` quedan
+  restos de corridas anteriores. En el reporte poné el comando exacto que
+  usaste, para que el orquestador lo pueda repetir.
 
 ## Cuándo devolver BLOQUEADO
 

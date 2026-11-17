@@ -133,6 +133,14 @@ Lo que alguien podría esperar de este change y no se hace, una línea por
 - las alternativas de decisiones pendientes que, si se eligen, sumarían
   alcance.
 
+**Los casos vecinos se deciden en el gate, no acá.** Si otra clase de valor
+del mismo campo hoy responde mal (un 500, un valor truncado, un dato que
+nadie mandó) y el pedido no la nombra, no la mandes directo a "Fuera de
+alcance": ponela como decisión pendiente, con "dejarla como hoy" y
+"corregirla en este change" como opciones. Elegí la más razonable, pero que
+la persona lo vea como decisión. Las preguntas abiertas del `impacto.md`
+sobre esos casos van por el mismo camino.
+
 Cada ítem dice qué no se hace y, si se sabe, dónde va ("va en un PR de n8n
 aparte"). No es una lista de deseos: no inventes ítems para llenarla.
 
@@ -155,7 +163,12 @@ persona lo saque explícitamente de la lista.
   - blancos que no son `U+0020` en los extremos y en el medio (`U+0009`,
     `U+00A0`, saltos de línea);
   - otro tipo JSON: número, booleano, objeto, array;
-  - los bordes del largo o del formato (el justo, uno menos, uno más).
+  - los bordes del largo o del formato (el justo, uno menos, uno más);
+  - si el campo es numérico: los extremos del tipo (el máximo, el mínimo y
+    uno más allá de cada uno, por ejemplo `9223372036854775807` y
+    `9223372036854775808` para un `long`), cero y `-0`, negativo, decimal
+    con fracción (`5.9`, `0.5`), decimal con fracción cero (`5.0`) y
+    notación exponencial (`1e3`, `1E3`, `1.5e2`).
   El checklist es sobre los valores del campo. No incluye los límites del
   lector JSON ni del framework (largo máximo de un número, profundidad,
   claves repetidas): eso no lo cambia el change y no va a la spec.
@@ -204,6 +217,10 @@ persona lo saque explícitamente de la lista.
   el checklist de bordes: si al aplicar el feedback creés que falta un borde
   nuevo, proponelo como decisión pendiente y que lo decida la persona. Lo que
   sí hacés es dejar coherente lo que ya estaba (ver abajo).
+- **Una regla del feedback se cubre entera.** Si el comentario fija una regla
+  para una clase de valores ("un entero fuera del rango de long responde
+  400"), esa clase está pedida: escribí su Scenario con valores concretos
+  (los dos extremos, si es un rango), aunque el comentario no dé el valor.
 - **No reescribas lo que no se pidió.** La persona va a volver a revisar, y un
   diff chico se revisa bien; uno grande se aprueba sin leer.
 - **Pero dejá el proposal coherente.** Después de aplicar el feedback, releé

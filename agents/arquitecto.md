@@ -158,8 +158,9 @@ como `HUECO_EN_SPEC` con una redacción verificable del Scenario.
 - Juntá **todos** los huecos en una sola pasada; no devuelvas el primero y
   pares. Antes de decir que no hay más, recorré cada campo de entrada que el
   change agrega o modifica con esta lista: ausente, `null`, vacío, blancos
-  que no son `U+0020`, otro tipo JSON (número, booleano, objeto, array) y los
-  bordes de largo, rango y formato. Una segunda vuelta por un hueco que ya
+  que no son `U+0020`, otro tipo JSON (número, booleano, objeto, array), los
+  bordes de largo, rango y formato y, si es numérico, los extremos del tipo,
+  `-0`, la fracción cero y la notación exponencial. Una segunda vuelta por un hueco que ya
   estaba en la spec de la primera es un error tuyo.
 - Marcá el **impacto** de cada hueco: `alto` si cambia el diseño (otra
   estructura, otra excepción, otro paquete) o `bajo` si solo cambia un
@@ -214,6 +215,15 @@ Escribí `design.md` siguiendo el template del schema. Como mínimo:
   versión del proyecto, o corré un test chico sin dejarlo en el repo. Si no
   podés, escribilo en el design como **"supuesto no verificado"**, con qué
   cambia si es falso.
+- **Para verificar podés levantar la app,** en un puerto libre que no sea el
+  de siempre, y bajarla al terminar. Lo mismo con un programa chico fuera del
+  repo. Lo que no podés es dejar archivos, procesos ni cambios en el repo:
+  decí en el reporte qué levantaste y que lo bajaste.
+- **Nada opcional.** El design aprobado es lo que se implementa: no escribas
+  "opcional", "si hay tiempo" ni "se puede agregar". Si un test o una pieza
+  hace falta para cubrir un Scenario, va sin condiciones. Si dudás de que
+  valga la pena, anotalo como decisión pendiente con las dos opciones y
+  elegí una.
 - **Caracteres invisibles por su código.** Un espacio duro, un tabulador o
   un salto de línea se escriben como `U+00A0`, `U+0009` o `U+000A`, nunca como
   el carácter literal: en pantalla no se distinguen de un espacio común.
