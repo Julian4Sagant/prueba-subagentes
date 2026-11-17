@@ -250,10 +250,14 @@ En cada gate frená y mostrale a la persona:
   sino el valor exacto o cómo construirlo) y que los caracteres invisibles
   estén escritos por su código (`U+00A0`): si no, anotalo como observación.
   Si observás que falta un borde de un campo de entrada, no nombres solo el
-  caso que viste: recorré la misma lista que usa el spec-writer (ausente,
-  `null`, vacío, blancos que no son `U+0020`, número, booleano, objeto,
-  array, bordes de largo) y nombrá todas las clases que faltan, en una sola
+  caso que viste: recorré entero el checklist de cada campo de entrada de
+  `.claude/agents/spec-writer.md` (incluidos los bordes numéricos: extremos
+  del tipo, `-0`, fracción cero, exponencial con `e` y con `E`) y nombrá
+  todas las clases que faltan en la primera pasada, en una sola
   observación.
+  Revisá también "Fuera de alcance": si un caso vecino del mismo campo que
+  hoy responde mal (500, truncado) está ahí sin haber pasado por una
+  decisión pendiente, anotalo como observación.
 
 ### Diff entre rondas
 
