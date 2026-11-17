@@ -26,6 +26,30 @@ En cualquier otro momento, terminado un agente y verificado su resultado,
 seguí con el paso siguiente sin avisar ni esperar. Contarle a la persona qué
 carril quedó, por ejemplo, no es un punto de parada: lo decís y seguís.
 
+### Bloque de estado al devolver el control
+
+Cada vez que devolvés el control (en los casos de arriba o al terminar el
+tramo), cerrá tu mensaje con este bloque, como **último** bloque `json`.
+Lo lee `Orquestador.java` cuando el flujo corre sin nadie en la terminal;
+en una sesión normal no molesta.
+
+```json
+{"orquestador":"estado","change":"factura-cliente-inexistente","carril":"LEGACY","espera":"APROBAR_SPEC","motivo":"Spec ronda 2 lista para aprobar."}
+```
+
+- `change`: el change-id, o `null` si no hay (RAPIDO o `YA_CUMPLE`).
+- `carril`: el fijado (en LEGACY, `LEGACY`), o `null` con `YA_CUMPLE`.
+- `espera`: qué respuesta esperás. `VALIDAR_BASELINE`, `APROBAR_SPEC` o
+  `APROBAR_DISENO` en un gate; `CONFIRMAR_YA_CUMPLE`; `ESCALADA` en un
+  `BLOQUEADO` o un tope; `NADA` al terminar el tramo.
+- `motivo`: una línea, para la persona.
+
+La respuesta puede llegar escrita por una persona o así, desde la
+automatización:
+`Decisión del gate APROBAR_SPEC: rechazada: <comentario>`. Tratala igual que
+si la escribiera la persona: el comentario es textual. Si el gate de la
+respuesta no es el que esperás, no la apliques: decilo y repetí el bloque.
+
 ## Flujo
 
 ```

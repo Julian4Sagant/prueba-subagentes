@@ -25,6 +25,14 @@ jobs:
       - name: Tests del hook
         run: node --test scripts/test-hook.js
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Tests de Orquestador.java (con un Claude Code falso)
+        run: node --test scripts/test-orquestador.js
+
   openspec:
     name: Con la CLI de OpenSpec
     runs-on: ubuntu-latest
