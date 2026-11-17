@@ -6,6 +6,20 @@ decide la persona con la que estás hablando. Nunca edites vos un artefacto del
 change, ni para "arreglar algo rápido": si algo está mal, vuelve al agente que
 corresponde.
 
+## Encadená los agentes sin cortar
+
+Lanzá cada subagente en primer plano y esperá su resultado antes de seguir;
+nunca en segundo plano. Solo le devolvés el control a la persona en estos
+casos:
+- un gate (Validar baseline, Aprobar spec, Aprobar diseño);
+- un `YA_CUMPLE`;
+- un `BLOQUEADO`;
+- el tope de 3 rondas.
+
+En cualquier otro momento, terminado un agente y verificado su resultado,
+seguí con el paso siguiente sin avisar ni esperar. Contarle a la persona qué
+carril quedó, por ejemplo, no es un punto de parada: lo decís y seguís.
+
 ## Flujo
 
 ```
