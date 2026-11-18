@@ -58,13 +58,23 @@ public class Orquestador {
     static final List<String> ESPERAS = List.of(
             "VALIDAR_BASELINE", "APROBAR_SPEC", "APROBAR_DISENO", "CONFIRMAR_YA_CUMPLE", "ESCALADA", "NADA");
 
-    /** Permisos base: lo que usan los agentes y el orquestador en las corridas de prueba. */
+    /**
+     * Permisos base: lo que usan los agentes y el orquestador en las corridas de prueba.
+     * Incluye `javac` y `java` para que el arquitecto pueda compilar y correr un programa de
+     * prueba fuera de Maven (su prompt lo permite, levantando la app en un puerto propio y
+     * bajándola al terminar). El hook `sin-escritura.js` sigue bloqueando git; editá el archivo
+     * generado si una corrida necesita más.
+     */
     static final List<String> PERMISOS_BASE = List.of(
             "Read", "Edit", "Write", "Glob", "Grep", "Agent", "Task", "Skill",
-            "Bash(openspec:*)", "Bash(mvn:*)", "Bash(./mvnw:*)", "Bash(java:*)", "Bash(node:*)",
-            "Bash(curl:*)", "Bash(grep:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(head:*)",
-            "Bash(wc:*)", "Bash(diff:*)", "Bash(mkdir:*)", "Bash(cp:*)",
-            "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)");
+            "Bash(openspec:*)", "Bash(mvn:*)", "Bash(./mvnw:*)", "Bash(java:*)", "Bash(javac:*)",
+            "Bash(node:*)", "Bash(curl:*)", "Bash(grep:*)", "Bash(ls:*)", "Bash(cat:*)",
+            "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(diff:*)", "Bash(sed -n:*)",
+            "Bash(od:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(echo:*)", "Bash(unzip -l:*)",
+            "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)",
+            "PowerShell(openspec:*)", "PowerShell(./mvnw:*)", "PowerShell(mvn:*)",
+            "PowerShell(javac:*)", "PowerShell(java:*)",
+            "PowerShell(Get-Content:*)", "PowerShell(Get-ChildItem:*)", "PowerShell(Select-String:*)");
 
     // ---------------------------------------------------------------- Configuración
 
@@ -251,7 +261,7 @@ public class Orquestador {
         Path gate = dir("gates").resolve(base + ".md");
         Files.writeString(gate, armarGate(e, base, costo, negados, resultado), StandardCharsets.UTF_8);
         System.out.println("   Espera: " + e.espera + (e.motivo.isEmpty() ? "" : " (" + e.motivo + ")"));
-        System.out.println(String.format(Locale.ROOT, "   Costo: US$ %.2f (acumulado US$ %.2f)", costo, e.costo));
+        System.out.println(String.format(Locale.ROOT, "   Costo estimado (precio de lista): US$ %.2f (acumulado US$ %.2f)", costo, e.costo));
         if (!negados.isEmpty()) System.out.println("   Permisos negados: " + negados.size() + ", detalle en el gate");
         System.out.println("   Para leer: " + gate);
     }
@@ -262,7 +272,7 @@ public class Orquestador {
         sb.append("- Espera: **").append(e.espera).append("**").append(e.motivo.isEmpty() ? "" : " (" + e.motivo + ")").append("\n");
         sb.append("- Change: ").append(e.change.isEmpty() ? "-" : e.change)
           .append(" | Carril: ").append(e.carril.isEmpty() ? "-" : e.carril).append("\n");
-        sb.append(String.format(Locale.ROOT, "- Costo: US$ %.2f (acumulado US$ %.2f) | Sesión: %s%n", costo, e.costo, e.sesion));
+        sb.append(String.format(Locale.ROOT, "- Costo estimado (precio de lista): US$ %.2f (acumulado US$ %.2f) | Sesión: %s%n", costo, e.costo, e.sesion));
         if (!negados.isEmpty()) {
             sb.append("- **Permisos negados** (sumalos a ").append(cfg.permisos().getFileName()).append(" si hacían falta):\n");
             for (String n : negados) sb.append("  - `").append(n.replace("`", "'")).append("`\n");
@@ -447,7 +457,10 @@ public class Orquestador {
         boolean vigilar = false;
         boolean windows = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win");
         List<String> claude = List.of(windows ? "claude.cmd" : "claude");
-        String modelo = null;
+        // El orquestador (leer, verificar, aplicar reglas fijas, escribir el gate) no necesita
+        // Opus: Sonnet cuesta varias veces menos por token. Los subagentes que sí lo necesitan
+        // (arqueólogo, arquitecto) lo conservan por su frontmatter. Cambialo con --modelo.
+        String modelo = "sonnet";
         double presupuesto = 30;
         long timeout = 180;
         for (int i = 0; i < args.length; i++) {

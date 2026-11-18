@@ -49,6 +49,7 @@ test('un pedido corre /pedido y queda esperando el gate que dice el bloque de es
 	const [ll] = t.llamadas();
 	assert.strictEqual(ll.prompt, '/pedido Que facturar a un cliente inexistente\ndevuelva un error.');
 	assert.ok(ll.args.includes('--settings') && ll.args.includes('-p') && !ll.args.includes('--resume'));
+	assert.strictEqual(ll.args[ll.args.indexOf('--model') + 1], 'sonnet', 'el orquestador corre en Sonnet por defecto');
 	assert.ok(t.hay('gates', 'fac-12-1.md') && t.hay('procesados', 'FAC-12.txt'));
 	const gate = fs.readFileSync(path.join(t.bandeja, 'gates', 'fac-12-1.md'), 'utf8');
 	assert.match(gate, /gate: APROBAR_SPEC/);

@@ -96,7 +96,11 @@ cuando algo falla a mitad de camino.
 campo de entrada que el pedido va a cambiar, documentá qué responde hoy cada
 clase de valor: ausente, `null`, vacío, blancos que no son `U+0020`, otro tipo
 JSON (texto, número, booleano, objeto, array), y los bordes de rango y formato
-(por ejemplo, `0`, un negativo, un decimal, un número como texto). Con eso el
+(por ejemplo, `0`, un negativo, un decimal, un número como texto). Si el campo
+es numérico, sumá los bordes numéricos: los extremos del tipo y uno más allá
+de cada uno (por ejemplo `9223372036854775807` y `9223372036854775808` para un
+`long`), `-0`, un decimal con fracción (`5.9`, `0.5`), un decimal con fracción
+cero (`5.0`) y la notación exponencial (`1e3`, `1E3`, `1.5e2`). Con eso el
 spec-writer puede declarar con precisión qué rompe el change. Agrupá en un
 solo Scenario las clases que responden exactamente igual, nombrándolas a
 todas. Los límites del lector JSON (cuerpo malformado, números enormes,
@@ -132,6 +136,13 @@ claves repetidas) no entran: el change no los toca.
    **nombre exacto del Scenario** como nombre visible del test. Seguí el estilo
    y la infraestructura de tests del proyecto. Tienen que pasar contra el
    código actual sin tocarlo.
+   - **No infles el estado para alcanzar un caso.** Si para probar un valor
+     necesitás un registro que exista (un cliente, por ejemplo), elegí un id
+     chico que se pueda escribir en la forma que estás probando, en vez de
+     crear cientos de registros hasta llegar a uno grande. Para la notación
+     exponencial, `1e1` (el cliente `10`) prueba lo mismo que `1e3` sin dar de
+     alta mil clientes. Un test que crea estado de más se rompe el día que ese
+     alta se vuelve más cara o se limita, por un motivo ajeno a lo que prueba.
 
 ## Cómo escribir la spec del baseline
 
