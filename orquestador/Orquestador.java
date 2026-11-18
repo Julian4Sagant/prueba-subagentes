@@ -72,9 +72,13 @@ public class Orquestador {
             "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(diff:*)", "Bash(sed -n:*)",
             "Bash(od:*)", "Bash(mkdir:*)", "Bash(cp:*)", "Bash(echo:*)", "Bash(unzip -l:*)",
             "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)",
+            // Para que el arquitecto pueda BAJAR la app que levanta para verificar (si no, queda
+            // un proceso suelto en cada corrida): ubicar el proceso y matarlo.
+            "Bash(jps:*)", "Bash(netstat:*)", "Bash(taskkill:*)",
             "PowerShell(openspec:*)", "PowerShell(./mvnw:*)", "PowerShell(mvn:*)",
             "PowerShell(javac:*)", "PowerShell(java:*)",
-            "PowerShell(Get-Content:*)", "PowerShell(Get-ChildItem:*)", "PowerShell(Select-String:*)");
+            "PowerShell(Get-Content:*)", "PowerShell(Get-ChildItem:*)", "PowerShell(Select-String:*)",
+            "PowerShell(Get-NetTCPConnection:*)", "PowerShell(Get-Process:*)", "PowerShell(Stop-Process:*)");
 
     // ---------------------------------------------------------------- Configuración
 
@@ -224,7 +228,7 @@ public class Orquestador {
 
         String resultado = "";
         List<String> negados = new ArrayList<>();
-        double costo = 0;
+        double costoSesion = 0;
         String problema = null;
         Object json = null;
         try { json = out.isBlank() ? null : Json.parse(out.trim()); } catch (RuntimeException ex) { /* queda null */ }
@@ -235,14 +239,19 @@ public class Orquestador {
         } else {
             Map<?, ?> m = (Map<?, ?>) json;
             if (m.get("session_id") instanceof String s && !s.isEmpty()) e.sesion = s;
-            if (m.get("total_cost_usd") instanceof Number n) costo = n.doubleValue();
+            if (m.get("total_cost_usd") instanceof Number n) costoSesion = n.doubleValue();
             if (m.get("result") instanceof String r) resultado = r;
             if (m.get("permission_denials") instanceof List<?> l)
                 for (Object o : l) negados.add(o instanceof Map<?, ?> d ? String.valueOf(d.get("tool_name")) + " " + d.get("tool_input") : String.valueOf(o));
             if (Boolean.TRUE.equals(m.get("is_error")))
                 problema = "Claude Code terminó con error (" + m.get("subtype") + ")";
         }
-        e.costo += costo;
+        // `total_cost_usd` viene ACUMULADO de toda la sesión, no por corrida: con `--resume`
+        // cada corrida repite el gasto de los pasos anteriores (una corrida que solo lanza un
+        // agente Sonnet igual reporta el Opus de la corrida previa). El costo de ESTA corrida es
+        // cuánto subió el acumulado; `e.costo` guarda el acumulado de la sesión.
+        double costo = Math.max(0, costoSesion - e.costo);
+        if (costoSesion > 0) e.costo = costoSesion;
 
         Map<?, ?> bloque = problema == null ? bloqueDeEstado(resultado) : null;
         if (problema == null && bloque == null) problema = "el orquestador no cerró con el bloque de estado";

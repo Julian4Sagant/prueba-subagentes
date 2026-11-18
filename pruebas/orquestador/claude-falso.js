@@ -8,6 +8,10 @@ const args = process.argv.slice(2);
 const prompt = fs.readFileSync(0, 'utf8');
 fs.appendFileSync('llamadas.jsonl', JSON.stringify({ args, prompt }) + '\n');
 
+// total_cost_usd viene ACUMULADO de la sesión: cada corrida devuelve 0.5 más que la anterior.
+// Así el test distingue la cuenta correcta (acumulado) de la vieja que sumaba (triplicaba).
+const nLlamadas = fs.readFileSync('llamadas.jsonl', 'utf8').trim().split('\n').length;
+
 const i = args.indexOf('--resume');
 const sesion = i >= 0 ? args[i + 1] : 'sesion-falsa-1';
 
@@ -26,7 +30,7 @@ const salida = {
 	subtype: 'success',
 	is_error: false,
 	session_id: sesion,
-	total_cost_usd: 0.5,
+	total_cost_usd: 0.5 * nLlamadas,
 	result: texto,
 	permission_denials: prompt.includes('NEGAR') ? [{ tool_name: 'Bash', tool_input: { command: 'rm -rf x' } }] : [],
 };
