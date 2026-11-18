@@ -4,8 +4,10 @@ const { test } = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
+const net = require('net');
+const http = require('http');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawn } = require('child_process');
 
 const RAIZ = path.resolve(__dirname, '..');
 const JAVA = path.join(RAIZ, 'orquestador', 'Orquestador.java');
@@ -35,7 +37,7 @@ function armar() {
 	const llamadas = () => fs.readFileSync(path.join(proyecto, 'llamadas.jsonl'), 'utf8')
 		.trim().split('\n').map((l) => JSON.parse(l));
 	const hay = (carpeta, nombre) => fs.existsSync(path.join(bandeja, carpeta, nombre));
-	return { bandeja, correr, escribir, estado, llamadas, hay };
+	return { proyecto, bandeja, correr, escribir, estado, llamadas, hay };
 }
 
 test('un pedido corre /pedido y queda esperando el gate que dice el bloque de estado', () => {
@@ -117,4 +119,73 @@ test('los permisos negados quedan en el gate', () => {
 	const gate = fs.readFileSync(path.join(t.bandeja, 'gates', 'p3-1.md'), 'utf8');
 	assert.match(gate, /Permisos negados/);
 	assert.match(gate, /rm -rf x/);
+});
+
+// --- Fuente webhook (HTTP) --------------------------------------------------
+
+function esperar(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+/** Reintenta conectar al puerto hasta que el servidor esté arriba. */
+async function esperarPuerto(puerto, msMax) {
+	const hasta = Date.now() + msMax;
+	while (Date.now() < hasta) {
+		const ok = await new Promise((res) => {
+			const s = net.connect(puerto, '127.0.0.1');
+			s.on('connect', () => { s.destroy(); res(true); });
+			s.on('error', () => res(false));
+		});
+		if (ok) return;
+		await esperar(200);
+	}
+	throw new Error('el webhook no abrió el puerto ' + puerto);
+}
+
+async function esperarArchivo(ruta, msMax) {
+	const hasta = Date.now() + msMax;
+	while (Date.now() < hasta) {
+		if (fs.existsSync(ruta)) return;
+		await esperar(300);
+	}
+	throw new Error('no apareció ' + ruta);
+}
+
+function post(puerto, ruta, cuerpo, headers = {}) {
+	return new Promise((res, rej) => {
+		const req = http.request({ host: '127.0.0.1', port: puerto, path: ruta, method: 'POST',
+			headers: { 'Content-Type': 'text/plain; charset=utf-8', ...headers } }, (r) => {
+			let b = ''; r.on('data', (d) => (b += d)); r.on('end', () => res({ codigo: r.statusCode, cuerpo: b }));
+		});
+		req.on('error', rej);
+		req.end(Buffer.from(cuerpo, 'utf8'));
+	});
+}
+
+test('un POST al webhook deja el pedido en la bandeja y el flujo lo procesa', async () => {
+	const t = armar();
+	const puerto = 18737;
+	const proc = spawn('java', [JAVA, '--proyecto', t.proyecto, '--bandeja', t.bandeja,
+		'--claude', `node ${FALSO}`, '--http', String(puerto)], { stdio: 'ignore' });
+	try {
+		await esperarPuerto(puerto, 20000);
+
+		// Pedido con id en el header, como lo mandaría un webhook.
+		const r = await post(puerto, '/pedido', 'autor: Ana\nUn pedido por webhook.\n', { 'X-Pedido-Id': 'WH-1' });
+		assert.strictEqual(r.codigo, 202);
+		await esperarArchivo(path.join(t.bandeja, 'gates', 'wh-1-1.md'), 25000);
+		assert.strictEqual(t.estado('wh-1').espera, 'APROBAR_SPEC');
+		const ll = t.llamadas().at(-1);
+		assert.strictEqual(ll.prompt, '/pedido Un pedido por webhook.');
+
+		// El mismo id otra vez: 409.
+		const dup = await post(puerto, '/pedido', 'otra vez\n', { 'X-Pedido-Id': 'WH-1' });
+		assert.strictEqual(dup.codigo, 409);
+
+		// Una decisión por el webhook retoma la sesión.
+		const d = await post(puerto, '/decision', 'pedido: WH-1\ngate: APROBAR_SPEC\ndecision: aprobada\n');
+		assert.strictEqual(d.codigo, 202);
+		await esperarArchivo(path.join(t.bandeja, 'gates', 'wh-1-2.md'), 25000);
+		assert.strictEqual(t.estado('wh-1').espera, 'NADA');
+	} finally {
+		proc.kill();
+	}
 });
