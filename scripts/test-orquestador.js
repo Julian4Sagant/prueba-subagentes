@@ -81,8 +81,12 @@ test('las decisiones retoman la misma sesión y se descartan las que no correspo
 	const e = t.estado('p1');
 	assert.strictEqual(e.espera, 'NADA');
 	assert.strictEqual(e.corridas, '3');
+	// total_cost_usd viene acumulado (0.5, 1.0, 1.5): e.costo guarda el acumulado de la sesión,
+	// no la suma de los tres (que daría 3.0, el bug viejo).
 	assert.strictEqual(e.costo, '1.5000');
 	assert.ok(t.hay('gates', 'p1-3.md'));
+	const gate = fs.readFileSync(path.join(t.bandeja, 'gates', 'p1-3.md'), 'utf8');
+	assert.match(gate, /US\$ 0\.50 \(acumulado US\$ 1\.50\)/, 'el gate muestra el costo de la corrida y el acumulado');
 });
 
 test('un pedido repetido se descarta', () => {
