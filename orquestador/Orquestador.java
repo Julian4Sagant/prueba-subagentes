@@ -145,6 +145,64 @@ public class Orquestador {
         for (Path f : txt("decisiones")) mover(f, decision(f));
     }
 
+    // ---------------------------------------------------------------- Fuente webhook (HTTP)
+
+    /**
+     * Levanta un servidor HTTP que recibe pedidos y decisiones por POST y los deja en la bandeja;
+     * de ahí los toma el bucle normal. Es una fuente de entrada (como lo sería un webhook de Jira);
+     * la salida (los gates) sigue en archivos. Usa el HttpServer del JDK, sin dependencias.
+     *   POST /pedido     cuerpo = el pedido (primera línea "autor:" opcional); id en el header
+     *                    X-Pedido-Id, o se genera uno.
+     *   POST /decision   cuerpo = las cabeceras "pedido:", "gate:", "decision:" y el comentario.
+     */
+    void iniciarHttp(int puerto) throws IOException {
+        com.sun.net.httpserver.HttpServer srv =
+                com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", puerto), 0);
+        srv.createContext("/pedido", x -> ingresar(x, true));
+        srv.createContext("/decision", x -> ingresar(x, false));
+        srv.setExecutor(null);
+        srv.start();
+        System.out.println("Webhook en http://127.0.0.1:" + puerto + "  (POST /pedido y POST /decision)");
+    }
+
+    /** Un POST deja su cuerpo como un .txt en la bandeja; el bucle lo procesa como cualquier otro. */
+    void ingresar(com.sun.net.httpserver.HttpExchange x, boolean esPedido) throws IOException {
+        try {
+            if (!x.getRequestMethod().equalsIgnoreCase("POST")) { responder(x, 405, "usá POST\n"); return; }
+            String cuerpo = new String(x.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            if (esPedido) {
+                String id = x.getRequestHeaders().getFirst("X-Pedido-Id");
+                id = idSeguro(id == null || id.isBlank() ? "http-" + System.currentTimeMillis() : id);
+                if (id.isEmpty()) { responder(x, 400, "id inválido\n"); return; }
+                if (Files.exists(dir("entrada").resolve(id + ".txt")) || Files.exists(dir("estado").resolve(id + ".properties"))) {
+                    responder(x, 409, "ya existe el pedido " + id + "\n"); return;
+                }
+                escribirAtomico(dir("entrada").resolve(id + ".txt"), cuerpo);
+                System.out.println(">> Webhook: pedido " + id + " encolado");
+                responder(x, 202, "pedido " + id + " encolado\n");
+            } else {
+                escribirAtomico(dir("decisiones").resolve("http-" + System.currentTimeMillis() + ".txt"), cuerpo);
+                System.out.println(">> Webhook: decisión encolada");
+                responder(x, 202, "decisión encolada\n");
+            }
+        } catch (RuntimeException ex) {
+            responder(x, 400, "error: " + ex.getMessage() + "\n");
+        }
+    }
+
+    /** Escribe en un `.tmp` y renombra, para que el bucle nunca lea un archivo a medio escribir. */
+    void escribirAtomico(Path destino, String contenido) throws IOException {
+        Path tmp = destino.resolveSibling(destino.getFileName() + ".tmp");
+        Files.writeString(tmp, contenido, StandardCharsets.UTF_8);
+        Files.move(tmp, destino, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    static void responder(com.sun.net.httpserver.HttpExchange x, int codigo, String texto) throws IOException {
+        byte[] b = texto.getBytes(StandardCharsets.UTF_8);
+        x.sendResponseHeaders(codigo, b.length);
+        try (OutputStream os = x.getResponseBody()) { os.write(b); }
+    }
+
     /** Primera entrada: un pedido nuevo. Corre /pedido hasta el primer punto de parada. */
     boolean nuevoPedido(Path f) throws IOException, InterruptedException {
         String id = idSeguro(f.getFileName().toString().replaceFirst("\\.txt$", ""));
@@ -472,6 +530,7 @@ public class Orquestador {
         String modelo = "sonnet";
         double presupuesto = 30;
         long timeout = 180;
+        int httpPuerto = 0;
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case "--proyecto" -> proyecto = Path.of(args[++i]);
@@ -482,9 +541,12 @@ public class Orquestador {
                 case "--modelo" -> modelo = args[++i];
                 case "--presupuesto" -> presupuesto = Double.parseDouble(args[++i]);
                 case "--timeout" -> timeout = Long.parseLong(args[++i]);
+                case "--http" -> httpPuerto = Integer.parseInt(args[++i]);
                 default -> { System.out.println("Opción desconocida: " + args[i]); System.exit(2); }
             }
         }
+        // Con el webhook, el programa queda escuchando: hace falta vigilar la bandeja.
+        if (httpPuerto > 0) vigilar = true;
         if (proyecto == null) { System.out.println("Falta --proyecto <dir>."); System.exit(2); }
         for (String f : List.of("ORQUESTACION.md", "CARRILES.md", ".claude/commands/pedido.md")) {
             if (!Files.exists(proyecto.resolve(f))) {
@@ -499,6 +561,7 @@ public class Orquestador {
         o.prepararBandeja();
         if (permisosPorDefecto && !Files.exists(permisos)) o.escribirPermisosBase();
         if (!Files.exists(permisos)) { System.out.println("No existe " + permisos + "."); System.exit(2); }
+        if (httpPuerto > 0) o.iniciarHttp(httpPuerto);
 
         System.out.println("Proyecto " + proyecto.toAbsolutePath() + " | bandeja " + bandeja.toAbsolutePath()
                 + (vigilar ? " | vigilando cada 5 s (Ctrl+C para salir)" : ""));

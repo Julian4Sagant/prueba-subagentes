@@ -111,6 +111,22 @@ java orquestador/Orquestador.java --proyecto C:/DEV/prueba-agentes --bandeja ban
 
    `decision` es `aprobada`, `rechazada` (con comentario) o, en una `ESCALADA`, `respuesta` (con texto). Una decisión para un gate que no es el que espera el pedido se descarta.
 
+#### Fuente webhook (HTTP)
+
+En vez de dejar archivos a mano, `--http <puerto>` levanta un webhook (con el `HttpServer` del JDK, sin dependencias) que recibe los pedidos y las decisiones por POST y los deja en la bandeja; de ahí los toma el mismo bucle. Es una fuente de entrada, como lo sería un webhook de Jira; la salida (los gates) sigue en archivos. Enciende `--vigilar` solo.
+
+```text
+java orquestador/Orquestador.java --proyecto C:/DEV/prueba-agentes --bandeja bandeja --http 8787
+```
+
+- `POST /pedido`: el cuerpo es el pedido (primera línea `autor:` opcional). El id va en el header `X-Pedido-Id`; si falta, se genera uno. Un id repetido responde 409.
+- `POST /decision`: el cuerpo trae las cabeceras `pedido:`, `gate:`, `decision:` y el comentario, igual que un `.txt` de `decisiones/`.
+
+```bash
+curl -X POST http://127.0.0.1:8787/pedido -H "X-Pedido-Id: FAC-13" --data "Al dar de alta un cliente, recortar los espacios del nombre."
+curl -X POST http://127.0.0.1:8787/decision --data $'pedido: FAC-13\ngate: APROBAR_SPEC\ndecision: aprobada'
+```
+
 **El orquestador corre en Sonnet por defecto.** Su trabajo (leer, verificar contra los archivos, aplicar las reglas fijas y escribir el gate) no necesita Opus, y Sonnet cuesta varias veces menos por token. Los subagentes que sí lo necesitan (arqueólogo, arquitecto) conservan su modelo por el frontmatter. Cambialo con `--modelo`.
 
 El gate informa el **costo de esa corrida** y el **acumulado de la sesión**, como estimación a precio de lista: si `claude` entra con una suscripción, no se factura en dólares, pero el tope `--presupuesto` se mide contra ese número igual. `total_cost_usd` viene acumulado de toda la sesión (con `--resume`, cada corrida repite el gasto de los pasos anteriores), así que el costo de la corrida se calcula como cuánto subió el acumulado.
