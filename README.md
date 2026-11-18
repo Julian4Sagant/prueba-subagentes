@@ -111,7 +111,9 @@ java orquestador/Orquestador.java --proyecto C:/DEV/prueba-agentes --bandeja ban
 
    `decision` es `aprobada`, `rechazada` (con comentario) o, en una `ESCALADA`, `respuesta` (con texto). Una decisión para un gate que no es el que espera el pedido se descarta.
 
-Los permisos de la corrida salen de `bandeja/claude-settings.json`, que se crea la primera vez con una lista base y se puede editar (o se pasa otro con `--permisos`). La corrida usa `--permission-mode acceptEdits`: lo que no está permitido se niega, y queda listado en el gate. Otras opciones: `--modelo`, `--presupuesto <usd>` (tope por corrida, 30 por defecto) y `--timeout <minutos>` (180).
+**El orquestador corre en Sonnet por defecto.** Su trabajo (leer, verificar contra los archivos, aplicar las reglas fijas y escribir el gate) no necesita Opus, y Sonnet cuesta varias veces menos por token. Los subagentes que sí lo necesitan (arqueólogo, arquitecto) conservan su modelo por el frontmatter. Cambialo con `--modelo`. El costo que informa el gate es una **estimación a precio de lista**: si `claude` entra con una suscripción, no se factura en dólares, pero el tope `--presupuesto` se mide contra ese número igual.
+
+Los permisos de la corrida salen de `bandeja/claude-settings.json`, que se crea la primera vez con una lista base y se puede editar (o se pasa otro con `--permisos`). La lista incluye `javac` y `java` para que el arquitecto pueda compilar y correr un programa de prueba (su prompt lo permite, en un puerto propio); el hook `sin-escritura.js` sigue bloqueando git. La corrida usa `--permission-mode acceptEdits`: lo que no está permitido se niega, y queda listado en el gate. Otras opciones: `--modelo`, `--presupuesto <usd>` (tope por corrida, 30 por defecto) y `--timeout <minutos>` (180).
 
 ## Validación
 
