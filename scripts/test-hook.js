@@ -69,6 +69,20 @@ test('con --solo-lectura bloquea escribir con la shell', () => {
 	assert.strictEqual(bash('echo hola > a.txt', '--solo-lectura').permissionDecision, 'deny');
 });
 
+test('con --permitir-commit deja pasar git add y git commit', () => {
+	assert.strictEqual(bash('git add .', '--permitir-commit'), null);
+	assert.strictEqual(bash('git commit -m "x"', '--permitir-commit'), null);
+	assert.strictEqual(bash('cd repo && git commit -am x', '--permitir-commit'), null);
+});
+
+test('con --permitir-commit sigue bloqueando lo que integra o reescribe', () => {
+	for (const comando of ['git push origin main', 'git reset --hard HEAD', 'git checkout main', 'git switch -c otra', 'git rebase main', 'git merge otra', 'git restore archivo.txt', 'git rm archivo.txt', 'git clean -fd']) {
+		const salida = bash(comando, '--permitir-commit');
+		assert.ok(salida, `no bloqueó: ${comando}`);
+		assert.strictEqual(salida.permissionDecision, 'deny');
+	}
+});
+
 test('ignora las herramientas que no son Bash', () => {
 	assert.strictEqual(correr({ tool_name: 'Write', tool_input: { file_path: 'a.txt', content: 'git commit' } }), null);
 });

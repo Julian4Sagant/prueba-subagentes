@@ -25,6 +25,9 @@ jobs:
       - name: Tests del hook
         run: node --test scripts/test-hook.js
 
+      - name: Tests de check-agent-scope.py (control de alcance del apply)
+        run: python3 scripts/test-check-agent-scope.py
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin

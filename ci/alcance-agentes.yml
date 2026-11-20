@@ -1,0 +1,27 @@
+# Control de alcance por agente (tramo de apply).
+#
+# Verifica que cada commit con el trailer "Agente: <nombre>" solo toque las rutas
+# permitidas para ese agente (scripts/check-agent-scope.py). Los commits sin trailer
+# se asumen humanos y se permiten; con --strict se exigiría el trailer en todos.
+#
+# El instalador (install.ps1) copia este archivo a .github/workflows/ del proyecto
+# y el script a scripts/. Es el control DURO del alcance: el hook sin-escritura.js
+# deja commitear, y este job frena el PR si un agente se salió de sus rutas.
+
+name: Alcance por agente
+
+on:
+  pull_request:
+
+jobs:
+  alcance:
+    name: check-agent-scope
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # El script compara base..HEAD; necesita el historial completo, no un shallow clone.
+          fetch-depth: 0
+
+      - name: Alcance por agente
+        run: python3 scripts/check-agent-scope.py --base "origin/${{ github.base_ref }}"

@@ -17,14 +17,20 @@ if (-not (Test-Path (Join-Path $Proyecto 'openspec') -PathType Container)) {
 $raiz = Split-Path -Parent $PSScriptRoot
 $claude = Join-Path $Proyecto '.claude'
 $schemas = Join-Path $Proyecto 'openspec/schemas'
-New-Item -ItemType Directory -Force -Path (Join-Path $claude 'agents'), (Join-Path $claude 'hooks'), (Join-Path $claude 'commands'), $schemas | Out-Null
+$scripts = Join-Path $Proyecto 'scripts'
+$workflows = Join-Path $Proyecto '.github/workflows'
+New-Item -ItemType Directory -Force -Path (Join-Path $claude 'agents'), (Join-Path $claude 'hooks'), (Join-Path $claude 'commands'), $schemas, $scripts, $workflows | Out-Null
 
 Copy-Item (Join-Path $raiz 'agents/*.md') (Join-Path $claude 'agents') -Force
 Copy-Item (Join-Path $raiz 'hooks/*.js') (Join-Path $claude 'hooks') -Force
 Copy-Item (Join-Path $raiz 'commands/*.md') (Join-Path $claude 'commands') -Force
 Copy-Item (Join-Path $raiz 'schemas/*') $schemas -Recurse -Force
-Copy-Item (Join-Path $raiz 'ORQUESTACION.md'), (Join-Path $raiz 'CARRILES.md') $Proyecto -Force
-Write-Host "Agentes, hook, comando /pedido, schema, ORQUESTACION.md y CARRILES.md instalados en $Proyecto"
+Copy-Item (Join-Path $raiz 'ORQUESTACION.md'), (Join-Path $raiz 'CARRILES.md'), (Join-Path $raiz 'APLICACION.md') $Proyecto -Force
+# Tramo de apply: el control de alcance por agente y su workflow de CI (GitHub Actions).
+Copy-Item (Join-Path $raiz 'scripts/check-agent-scope.py') $scripts -Force
+Copy-Item (Join-Path $raiz 'ci/alcance-agentes.yml') $workflows -Force
+Write-Host "Agentes, hook, comando /pedido, schema, ORQUESTACION.md, CARRILES.md y APLICACION.md instalados en $Proyecto"
+Write-Host "Apply: scripts/check-agent-scope.py y .github/workflows/alcance-agentes.yml (control de alcance por agente en cada PR)"
 
 # Lo que el instalador no hace por su cuenta.
 $pendientes = @()
