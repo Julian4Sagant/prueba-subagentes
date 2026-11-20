@@ -7,10 +7,10 @@ escribís código ni artefactos vos**: llamás a los subagentes, verificás lo q
 devuelven y frenás en los gates. La diferencia de fondo con la planificación es que
 **acá los agentes sí commitean**.
 
-> **Estado: en construcción.** Listas las fundaciones (Fase A), los agentes de
-> implementación (Fase B: `test-author` + `implementador`, ciclo ⇄) y los de revisión
-> (Fase C: `reviewer` + `security-reviewer`, en paralelo con severidades). Falta:
-> - Fase D: `archivista` + gate Aprobar MR + enganche en `Orquestador.java`.
+> **Estado: tramo completo.** Fundaciones (A), implementación (B: `test-author` +
+> `implementador`, ciclo ⇄), revisión (C: `reviewer` + `security-reviewer`, en paralelo
+> con severidades) y cierre (D: `archivista` + gate Aprobar MR + enganche en
+> `Orquestador.java`).
 
 ## De dónde sale este diseño
 
@@ -154,8 +154,7 @@ apply.
 | implementador | `tarea`, `build`, `archivos`, `testCuestionado`, `desvioDiseno` |
 | reviewer | `veredicto`, `chequeos`, `hallazgos` |
 | security-reviewer | `veredicto`, `hallazgos`, `datosPersonales`, `dependencias` |
-
-> `archivista` se agrega en la fase D.
+| archivista | `deltas`, `changelog`, `metricas`, `deuda` |
 
 ## Cómo llamar a cada agente
 
@@ -229,4 +228,37 @@ Cuando **todas las tareas están en `[x]`** (`openspec instructions apply --chan
 6. Cuando el reviewer da **APROBABLE** y el security **SIN BLOQUEANTES**, pasás al gate
    **Aprobar MR**.
 
-> El detalle de `archivista` y el cierre (fase D) se suma acá cuando se construya.
+## El gate Aprobar MR y el cierre
+
+Con el reviewer **APROBABLE** y el security **SIN BLOQUEANTES**:
+
+1. **Gate Aprobar MR.** Frená y mostrale a la persona: el veredicto de cada revisor,
+   los hallazgos MEDIO/BAJO que quedaron sin corregir, y el diff de la rama contra la
+   base. Cerrá con el bloque de estado, `espera: "APROBAR_MR"`. Esperá su respuesta
+   (aprobada, o rechazada con comentario: el comentario vuelve al implementador como una
+   ronda de corrección).
+2. **archivista.** Con el MR aprobado, llamá al **archivista** (change-id, base de la
+   rama, versión a liberar). Corre `openspec archive`, el CHANGELOG, los ADRs y la fila
+   de métricas, y commitea como **último commit de la rama**.
+3. **Verificá al archivista** (`OK`): el change quedó en `openspec/changes/archive/`,
+   las specs principales (`openspec/specs/`) tienen las deltas consolidadas
+   (`openspec validate` del repo en verde), y `docs/metricas/cambios.csv` tiene la fila
+   nueva. Que `changelog`, `metricas` y `deltas` del JSON coincidan con los archivos. Si
+   el archive dio error o advertencias, volvé al archivista.
+4. **Merge.** El merge del PR lo hace una persona; el orquestador **no mergea**. Cerrá
+   el tramo con el bloque de estado `espera: "NADA"`.
+
+## Bloque de estado al devolver el control
+
+Cuando devolvés el control en el gate del apply (Aprobar MR), en una escalada
+(`TEST_CUESTIONADO`, hueco o tope) o al terminar, cerrá con el **mismo bloque de estado**
+que `ORQUESTACION.md` ("Bloque de estado al devolver el control"), para que
+`Orquestador.java` lo lea sin interfaz. (Es distinto del `estado.json` por change, que es
+el archivo interno para retomar el loop.)
+
+```json
+{"orquestador":"estado","change":"cliente-telefono-contacto","carril":"COMPLETO","espera":"APROBAR_MR","motivo":"Revisión aprobable y sin bloqueantes de seguridad; listo para aprobar el MR."}
+```
+
+- `espera` en el apply: `APROBAR_MR` en el gate; `ESCALADA` en un `TEST_CUESTIONADO`, un
+  hueco o un tope; `NADA` al terminar (después del archivista).

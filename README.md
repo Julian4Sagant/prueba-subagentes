@@ -2,7 +2,7 @@
 
 Cinco subagentes de Claude Code que llevan un pedido (un ticket, un mensaje, una idea) hasta un change de OpenSpec listo para implementar: spec y diseño aprobados por una persona, y `tasks.md` en grupos listos para el apply.
 
-Cubren las fases **explore** y **propose** de OpenSpec. Las rondas de corrección son la fase **update**. El tramo de **apply** (implementación, revisión y cierre: `test-author`, `implementador`, `reviewer`, `security-reviewer` y `archivista`) se está construyendo en este mismo repo; su guion es [APLICACION.md](APLICACION.md) y sus fundaciones (modelo de git, control de alcance por agente) ya están — ver más abajo.
+Cubren las fases **explore** y **propose** de OpenSpec. Las rondas de corrección son la fase **update**. El tramo de **apply** (implementación, revisión y cierre: `test-author`, `implementador`, `reviewer`, `security-reviewer` y `archivista`) también vive acá; su guion es [APLICACION.md](APLICACION.md). A diferencia de la planificación, ahí los agentes **commitean** su trabajo (con el trailer `Agente:`), y el alcance por agente lo controla el CI (`scripts/check-agent-scope.py`).
 
 | Subagente | Fase | Skill que precarga | Escribe | Modelo |
 |---|---|---|---|---|

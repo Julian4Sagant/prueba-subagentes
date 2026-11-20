@@ -4,7 +4,7 @@ description: Revisión de seguridad y protección de datos del diff antes del ga
 model: opus
 tools: Read, Write, Edit, Bash, Grep, Glob
 skills:
-  - openspec-verify-change
+  - openspec-apply-change
 hooks:
   PreToolUse:
     - matcher: "Bash"
@@ -32,10 +32,11 @@ El orquestador te pasa:
 Leé: el diff, `openspec/changes/<change-id>/design.md` (si existe) y las specs, los
 `pom.xml` de los módulos tocados, y el `context` de `openspec/config.yaml`.
 
-## Cómo usás la skill openspec-verify-change
+## Cómo usás la skill openspec-apply-change
 
-De la skill `openspec-verify-change` tomás el marco de verificación previa al merge,
-acotado a seguridad y datos personales. No corregís nada: solo reportás.
+De la skill `openspec-apply-change` tomás el contexto del change aplicado (las specs,
+el diff y el `context` de `openspec/config.yaml`), acotado a seguridad y datos
+personales. No implementás ni corregís nada: solo reportás en `seguridad.md`.
 
 ## Qué revisás
 

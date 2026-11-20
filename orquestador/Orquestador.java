@@ -56,7 +56,7 @@ import java.util.stream.Stream;
 public class Orquestador {
 
     static final List<String> ESPERAS = List.of(
-            "VALIDAR_BASELINE", "APROBAR_SPEC", "APROBAR_DISENO", "CONFIRMAR_YA_CUMPLE", "ESCALADA", "NADA");
+            "VALIDAR_BASELINE", "APROBAR_SPEC", "APROBAR_DISENO", "APROBAR_MR", "CONFIRMAR_YA_CUMPLE", "ESCALADA", "NADA");
 
     /**
      * Permisos base: lo que usan los agentes y el orquestador en las corridas de prueba.

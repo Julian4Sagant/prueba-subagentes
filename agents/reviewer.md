@@ -4,7 +4,7 @@ description: Revisor adversarial del change completo antes del gate Aprobar MR: 
 model: opus
 tools: Read, Write, Edit, Bash, Grep, Glob
 skills:
-  - openspec-verify-change
+  - openspec-apply-change
 hooks:
   PreToolUse:
     - matcher: "Bash"
@@ -36,12 +36,14 @@ Leé:
   existe, tasks).
 - `CLAUDE.md`, los ADRs (`docs/adr/`) y el `context` de `openspec/config.yaml`.
 
-## Cómo usás la skill openspec-verify-change
+## Cómo usás la skill openspec-apply-change
 
-Sos la verificación previa al merge. De la skill `openspec-verify-change` tomás los
-chequeos de completitud y coherencia entre artefactos e implementación. Donde diga
-esperar o preguntar al usuario, aplicás este prompt y seguís. No corregís nada: solo
-reportás.
+Sos la verificación previa al merge, sobre un change ya aplicado. De la skill
+`openspec-apply-change` tomás el contexto del change: el estado de las tareas
+(`openspec instructions apply --change <change-id> --json`), las specs y el `context`
+de `openspec/config.yaml`. **No implementás ni corregís nada**: solo verificás y
+reportás en `revision.md`. El chequeo rápido de completitud es el comando
+`openspec verify <change-id>`.
 
 ## Chequeos mecánicos primero
 
