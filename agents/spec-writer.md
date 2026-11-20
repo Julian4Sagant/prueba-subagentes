@@ -111,6 +111,12 @@ sistema. Uno por uno:
   cambia. Si es BREAKING, qué cambia y para quién. Si un comportamiento
   existente cambia sin romper el contrato (por ejemplo, una ruta que ya daba
   404 y sigue dando 404 por otro motivo), decilo.
+  **Estrenar un método o una ruta que hoy no es un endpoint (responde 404 o 405
+  porque no está implementada) no es BREAKING, aunque el status cambie: nadie la
+  consume con éxito hoy.** BREAKING es cambiar el comportamiento de algo que un
+  consumidor ya usa con éxito. Ese paso de 404/405 a una respuesta útil va en
+  "Contratos afectados" como contrato nuevo, no como BREAKING ni en el
+  seguimiento.
 - **Sin cambios:** nombrá también los contratos vecinos que no cambian (la
   otra ruta del mismo recurso, la base), para que quien aprueba no tenga que
   adivinarlo. "Sin cambios" o "Sin migración" alcanza.

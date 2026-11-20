@@ -2,7 +2,7 @@
 
 Cinco subagentes de Claude Code que llevan un pedido (un ticket, un mensaje, una idea) hasta un change de OpenSpec listo para implementar: spec y diseño aprobados por una persona, y `tasks.md` en grupos listos para el apply.
 
-Cubren las fases **explore** y **propose** de OpenSpec. Las rondas de corrección son la fase **update**. El apply y el verify quedan para otro tramo, por ejemplo [subagentesCC-openspec](https://github.com/Julian4Sagant/subagentesCC-openspec) con `/apply-grupo`.
+Cubren las fases **explore** y **propose** de OpenSpec. Las rondas de corrección son la fase **update**. El tramo de **apply** (implementación, revisión y cierre: `test-author`, `implementador`, `reviewer`, `security-reviewer` y `archivista`) también vive acá; su guion es [APLICACION.md](APLICACION.md). A diferencia de la planificación, ahí los agentes **commitean** su trabajo (con el trailer `Agente:`), y el alcance por agente lo controla el CI (`scripts/check-agent-scope.py`).
 
 | Subagente | Fase | Skill que precarga | Escribe | Modelo |
 |---|---|---|---|---|
@@ -139,7 +139,8 @@ Los permisos de la corrida salen de `bandeja/claude-settings.json`, que se crea 
 |---|---|---|
 | `node scripts/validar.js` | Frontmatter, skills y hook de cada agente; schema con `impacto` primero y sus templates; `CARRILES.md` con las señales y los 4 carriles, citado y no copiado; y que el JSON de ejemplo de cada agente traiga **exactamente** los campos de la tabla "Campos obligatorios" de `ORQUESTACION.md` y las señales de `CARRILES.md`. | Node |
 | `node scripts/verificar-skills.js` | Que cada paso ("Paso 6") y sección ("Check for context") de una skill oficial que citan los agentes esté registrado en `scripts/skills-referenciadas.json`. | Node |
-| `node --test scripts/test-hook.js` | Que `sin-escritura.js` bloquee `git commit`, `push`, `reset`, `checkout` y similares, y deje pasar `openspec`, `git status` y `git diff`. | Node |
+| `node --test scripts/test-hook.js` | Que `sin-escritura.js` bloquee `git commit`, `push`, `reset`, `checkout` y similares, deje pasar `openspec`, `git status` y `git diff`, y que con `--permitir-commit` deje `add`/`commit` pero siga bloqueando lo que integra o reescribe. | Node |
+| `python scripts/test-check-agent-scope.py` | Que `check-agent-scope.py` traduzca bien los globs (`*` no cruza `/`, `**` sí) y que cada agente de apply solo matchee sus rutas. | Python |
 | `node --test scripts/test-orquestador.js` | Que `Orquestador.java` lance `/pedido`, lea el bloque de estado, retome la misma sesión con cada decisión y descarte las que no corresponden, con un Claude Code falso (`pruebas/orquestador/claude-falso.js`). | Node y Java 17+ |
 | `node scripts/verificar-skills.js --openspec` | Que esos pasos y secciones sigan existiendo, con el mismo título, en las skills que genera la CLI instalada. | OpenSpec |
 | `node scripts/humo.js` | De punta a punta, en un proyecto temporal: `openspec init`, el instalador y su lista de pendientes, `openspec schema validate`, un change que arranca por `impacto` y valida sin design, el apply leyendo los `## Grupo N:`, y un baseline que valida y se archiva. | OpenSpec y PowerShell |
@@ -155,14 +156,16 @@ CI corre todo en cada push y PR, con la versión de OpenSpec registrada en `skil
 ## Contenido
 
 ```
-agents/        los cinco agentes (fuente de verdad)
+agents/        los cinco agentes de planificación (fuente de verdad)
 schemas/       el schema spec-driven-agentes, con sus templates
-hooks/         sin-escritura.js: bloquea los comandos de git que cambian el repo
+hooks/         sin-escritura.js: bloquea git; con --permitir-commit deja commitear (tramo de apply)
 commands/      /pedido: arranca el flujo con un pedido nuevo
-ORQUESTACION.md  el guion que sigue la sesión principal
+ORQUESTACION.md  el guion que sigue la sesión principal en planificación
 CARRILES.md    carriles, señales, reglas y qué corre cada carril
+APLICACION.md  el guion del tramo de apply (implementación y cierre; en construcción)
 orquestador/   Orquestador.java: pedidos y decisiones por bandeja, con claude -p
-scripts/       instalador, validador, verificación de las skills, tests del hook y prueba de humo
+ci/            alcance-agentes.yml: workflow que corre el control de alcance en el proyecto
+scripts/       instalador, validador, verificación de skills, tests del hook, control de alcance y humo
 pruebas/humo/  fixtures de la prueba de humo: un change y un baseline mínimos
 ```
 

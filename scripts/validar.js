@@ -4,9 +4,9 @@
 // Agentes: frontmatter (name igual al archivo, description, model, tools), skills openspec-*,
 // hook sin-escritura.js existente, y bloques JSON de ejemplo que parsean con exactamente los
 // campos que el orquestador chequea.
-// Los campos no están escritos acá: salen de la tabla "Campos obligatorios" de ORQUESTACION.md,
-// y las señales, de la tabla de CARRILES.md. Así cada dato tiene un solo dueño, y este script
-// comprueba que los ejemplos de los agentes coincidan con él.
+// Los campos no están escritos acá: salen de la tabla "Campos obligatorios" de ORQUESTACION.md
+// (planificación) y de APLICACION.md (apply), y las señales, de la tabla de CARRILES.md. Así
+// cada dato tiene un solo dueño, y este script comprueba que los ejemplos de los agentes coincidan.
 // Schema: schema.yaml con el artefacto impacto primero y cada template referenciado presente.
 
 const fs = require('fs');
@@ -15,7 +15,7 @@ const path = require('path');
 const raiz = path.resolve(__dirname, '..');
 const MODELOS = ['haiku', 'sonnet', 'opus'];
 // Resultados que puede devolver cada agente; los que no están en la lista devuelven OK o BLOQUEADO.
-const RESULTADOS_PROPIOS = { 'explorador': ['YA_CUMPLE'], 'arquitecto': ['HUECO_EN_SPEC'], 'planner': ['HUECO_EN_DISENO'] };
+const RESULTADOS_PROPIOS = { 'explorador': ['YA_CUMPLE'], 'arquitecto': ['HUECO_EN_SPEC'], 'planner': ['HUECO_EN_DISENO'], 'implementador': ['TEST_CUESTIONADO'] };
 const resultadosDe = agente => ['OK', 'BLOQUEADO', ...(RESULTADOS_PROPIOS[agente] || [])];
 
 const problemas = [];
@@ -26,19 +26,18 @@ function leer(rel) {
 }
 
 /**
- * Lee la tabla "| Agente | Campos obligatorios |" de ORQUESTACION.md. Devuelve { todos: [...],
- * <agente>: [...] } con los nombres entre backticks de cada fila, sin lo que está entre
- * paréntesis (por ejemplo, "(con `OK`)" es una aclaración, no un campo).
+ * Lee la tabla "| Agente | Campos obligatorios |" de un guion. Devuelve { <agente>: [...] }
+ * con los nombres entre backticks de cada fila, sin lo que está entre paréntesis (por
+ * ejemplo, "(con `OK`)" es una aclaración, no un campo). {} si el guion no tiene la tabla.
  */
-function camposDeOrquestacion() {
-	const texto = leer('ORQUESTACION.md');
+function camposDeTabla(rel) {
+	const texto = leer(rel);
 	if (!texto) {
-		return null;
+		return {};
 	}
 	const inicio = texto.indexOf('| Agente | Campos obligatorios |');
 	if (inicio < 0) {
-		problemas.push('ORQUESTACION.md: no tiene la tabla "| Agente | Campos obligatorios |"');
-		return null;
+		return {};
 	}
 	const campos = {};
 	for (const linea of texto.slice(inicio).split('\n').slice(2)) {
@@ -48,6 +47,20 @@ function camposDeOrquestacion() {
 		}
 		campos[fila[1]] = [...fila[2].replace(/\([^)]*\)/g, '').matchAll(/`(\w+)`/g)].map(m => m[1]);
 	}
+	return campos;
+}
+
+/**
+ * Los campos salen de los dos guiones: ORQUESTACION.md (planificación) y APLICACION.md
+ * (apply). Cada agente tiene su fila en el guion de su tramo; la fila "todos" (campos
+ * comunes) la define ORQUESTACION.md.
+ */
+function camposObligatorios() {
+	const orq = camposDeTabla('ORQUESTACION.md');
+	if (Object.keys(orq).length === 0) {
+		problemas.push('ORQUESTACION.md: no tiene la tabla "| Agente | Campos obligatorios |"');
+	}
+	const campos = { ...orq, ...camposDeTabla('APLICACION.md') };
 	if (!campos.todos) {
 		problemas.push('ORQUESTACION.md: la tabla de campos no tiene la fila "todos"');
 	}
@@ -60,7 +73,7 @@ function senalesDeCarriles() {
 	return texto ? [...texto.matchAll(/^\| `(\w+)` \|/gm)].map(m => m[1]) : [];
 }
 
-const CAMPOS = camposDeOrquestacion() || {};
+const CAMPOS = camposObligatorios();
 const COMUNES = CAMPOS.todos || [];
 const SENALES = senalesDeCarriles();
 
@@ -85,6 +98,13 @@ function validarAgente(archivo) {
 	if (!campo(fm, 'description')) {
 		problemas.push(`${rel}: falta description`);
 	}
+	// Un description con ": " (dos puntos y espacio) sin comillas rompe el YAML del frontmatter:
+	// Claude Code no registra el agente y falla en silencio. Hay que comillarlo.
+	const descRaw = ((/^description:[ \t]*(.*)$/m.exec(fm) || [])[1] || '').trim();
+	const descComillada = (descRaw.startsWith('"') && descRaw.endsWith('"')) || (descRaw.startsWith("'") && descRaw.endsWith("'"));
+	if (descRaw && !descComillada && /:\s/.test(descRaw)) {
+		problemas.push(`${rel}: el "description" tiene ": " sin comillas; YAML lo rompe y el agente no se registra. Poné la description entre comillas.`);
+	}
 	if (!MODELOS.includes(campo(fm, 'model'))) {
 		problemas.push(`${rel}: model "${campo(fm, 'model')}" no es uno de ${MODELOS.join(', ')}`);
 	}
@@ -106,7 +126,7 @@ function validarAgente(archivo) {
 
 	const requeridos = CAMPOS[base];
 	if (!requeridos) {
-		problemas.push(`${rel}: la tabla "Campos obligatorios" de ORQUESTACION.md no tiene una fila para este agente`);
+		problemas.push(`${rel}: ni ORQUESTACION.md ni APLICACION.md tienen una fila para este agente en "Campos obligatorios"`);
 		return;
 	}
 	const bloques = [...texto.matchAll(/```json\n([\s\S]*?)\n```/g)];
