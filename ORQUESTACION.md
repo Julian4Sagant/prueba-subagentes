@@ -170,6 +170,12 @@ queda claro de dónde salió cada cambio.
 3. Verificá por tu cuenta:
    - explorador con `OK`: `openspec status --change <change-id> --json`
      muestra `impacto` en `done` (salvo carril RAPIDO, donde no hay change).
+     Abrí `impacto.md` y confirmá que **cada señal en `true` tiene su evidencia
+     escrita** (archivo, spec o test) en la sección "Señales". El campo
+     `evidencia` del JSON va `[]` con `OK`: la evidencia de las señales vive en
+     `impacto.md`, no en el JSON (el campo `evidencia` solo se llena con
+     `YA_CUMPLE`). Si una señal en `true` no tiene su evidencia en `impacto.md`,
+     volvé al explorador.
    - explorador con `YA_CUMPLE`: ver "Cuando el pedido ya se cumple".
    - arqueologo-legacy: `openspec validate baseline-<capability> --strict` en
      verde y los tests de caracterización pasan.
