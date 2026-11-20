@@ -7,9 +7,9 @@ escribís código ni artefactos vos**: llamás a los subagentes, verificás lo q
 devuelven y frenás en los gates. La diferencia de fondo con la planificación es que
 **acá los agentes sí commitean**.
 
-> **Estado: en construcción.** Listas las fundaciones (Fase A) y los agentes de
-> implementación (Fase B: `test-author` + `implementador`, con el ciclo ⇄). Falta:
-> - Fase C: `reviewer` + `security-reviewer` (en paralelo, severidades).
+> **Estado: en construcción.** Listas las fundaciones (Fase A), los agentes de
+> implementación (Fase B: `test-author` + `implementador`, ciclo ⇄) y los de revisión
+> (Fase C: `reviewer` + `security-reviewer`, en paralelo con severidades). Falta:
 > - Fase D: `archivista` + gate Aprobar MR + enganche en `Orquestador.java`.
 
 ## De dónde sale este diseño
@@ -152,8 +152,10 @@ apply.
 | todos | `agente`, `resultado`, `requiereHumano`, `motivo` |
 | test-author | `tarea`, `tests`, `noTesteables` |
 | implementador | `tarea`, `build`, `archivos`, `testCuestionado`, `desvioDiseno` |
+| reviewer | `veredicto`, `chequeos`, `hallazgos` |
+| security-reviewer | `veredicto`, `hallazgos`, `datosPersonales`, `dependencias` |
 
-> `reviewer`, `security-reviewer` y `archivista` se agregan en las fases C y D.
+> `archivista` se agrega en la fase D.
 
 ## Cómo llamar a cada agente
 
@@ -162,6 +164,9 @@ esta tarea, desde 1), y el **feedback** si lo hay. Además:
 - al **test-author**, la tarea `N.M` y los escenarios que lista (de la spec);
 - al **implementador**, la tarea `N.M` (o los hallazgos de revisión a corregir); los
   tests ya los dejó el test-author.
+- al **reviewer** y al **security-reviewer**, la **base** de la rama (para el diff
+  `git diff <base>...HEAD`, normalmente `origin/main`). Revisan todo el change, no una
+  tarea.
 
 ## El ciclo por tarea (⇄)
 
@@ -198,5 +203,30 @@ Grupo por grupo, empezando por Contratos, y tarea por tarea:
 Si la verificación falla, volvé al mismo agente con el error como feedback y el
 pedido acotado: corregí solo eso, sin tocar el resto ni sumar alcance.
 
-> El detalle de `reviewer`, `security-reviewer` y `archivista` (fases C y D) se suma
-> acá cuando se construyan.
+## La revisión (reviewer + security-reviewer)
+
+Cuando **todas las tareas están en `[x]`** (`openspec instructions apply --change
+<change-id> --json` con `state: all_done`), corré la revisión:
+
+1. Llamá al **reviewer** y, si corresponde, al **security-reviewer**, **en paralelo**
+   (los dos leen, no se pisan). El security-reviewer corre **siempre en COMPLETO**; en
+   ESTANDAR, solo si el cambio toca datos personales, auth o dependencias.
+2. Antes del reviewer conviene `openspec verify <change-id>` como chequeo rápido de
+   completitud y coherencia (no lo reemplaza).
+3. Verificá cada uno:
+   - **reviewer**: `revision.md` existe con la ronda; el `veredicto` y los `hallazgos`
+     coinciden con el archivo. Si `validate --strict` falla o quedan tareas sin `[x]`,
+     es BLOQUEANTE.
+   - **security-reviewer**: `seguridad.md` existe con la ronda; `veredicto`, `hallazgos`
+     y la tabla de datos personales coinciden.
+4. **Ciclo de corrección:** si hay algún hallazgo **BLOQUEANTE** o **ALTO** (reviewer),
+   o **CRÍTICO** o **ALTO** (security), volvé al **implementador** con esos hallazgos
+   como feedback (corrige solo eso) y después vuelven a correr el o los revisores. Los
+   **MEDIO** y **BAJO** quedan registrados pero no fuerzan una ronda: los ve el humano
+   en el gate.
+5. **Tope: 3 rondas de revisión por change.** Si a la 4ª seguiría habiendo
+   bloqueantes, frená y explicale al humano qué quedó.
+6. Cuando el reviewer da **APROBABLE** y el security **SIN BLOQUEANTES**, pasás al gate
+   **Aprobar MR**.
+
+> El detalle de `archivista` y el cierre (fase D) se suma acá cuando se construya.
