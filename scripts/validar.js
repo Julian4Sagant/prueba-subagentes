@@ -98,6 +98,13 @@ function validarAgente(archivo) {
 	if (!campo(fm, 'description')) {
 		problemas.push(`${rel}: falta description`);
 	}
+	// Un description con ": " (dos puntos y espacio) sin comillas rompe el YAML del frontmatter:
+	// Claude Code no registra el agente y falla en silencio. Hay que comillarlo.
+	const descRaw = ((/^description:[ \t]*(.*)$/m.exec(fm) || [])[1] || '').trim();
+	const descComillada = (descRaw.startsWith('"') && descRaw.endsWith('"')) || (descRaw.startsWith("'") && descRaw.endsWith("'"));
+	if (descRaw && !descComillada && /:\s/.test(descRaw)) {
+		problemas.push(`${rel}: el "description" tiene ": " sin comillas; YAML lo rompe y el agente no se registra. Poné la description entre comillas.`);
+	}
 	if (!MODELOS.includes(campo(fm, 'model'))) {
 		problemas.push(`${rel}: model "${campo(fm, 'model')}" no es uno de ${MODELOS.join(', ')}`);
 	}

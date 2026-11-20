@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Revisor adversarial del change completo antes del gate Aprobar MR: valida con OpenSpec, contrasta el diff contra specs, diseño y convenciones, y busca sobre todo lo que FALTA. Escribe solo revision.md. Usar cuando todas las tareas están en [x], en paralelo con el security-reviewer. Trabaja en un contexto distinto al de quien escribió el código.
+description: "Revisor adversarial del change completo antes del gate Aprobar MR: valida con OpenSpec, contrasta el diff contra specs, diseño y convenciones, y busca sobre todo lo que FALTA. Escribe solo revision.md. Usar cuando todas las tareas están en [x], en paralelo con el security-reviewer. Trabaja en un contexto distinto al de quien escribió el código."
 model: opus
 tools: Read, Write, Edit, Bash, Grep, Glob
 skills:

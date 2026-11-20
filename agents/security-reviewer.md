@@ -1,6 +1,6 @@
 ---
 name: security-reviewer
-description: Revisión de seguridad y protección de datos del diff antes del gate Aprobar MR: inyección, XML/SOAP (XXE), deserialización, auth, secretos, dependencias vulnerables y datos personales (Ley 18.331). Escribe solo seguridad.md. Usar en paralelo con el reviewer en el carril completo, y en el estándar cuando el cambio toca datos personales, auth o dependencias.
+description: "Revisión de seguridad y protección de datos del diff antes del gate Aprobar MR: inyección, XML/SOAP (XXE), deserialización, auth, secretos, dependencias vulnerables y datos personales (Ley 18.331). Escribe solo seguridad.md. Usar en paralelo con el reviewer en el carril completo, y en el estándar cuando el cambio toca datos personales, auth o dependencias."
 model: opus
 tools: Read, Write, Edit, Bash, Grep, Glob
 skills:

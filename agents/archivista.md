@@ -1,6 +1,6 @@
 ---
 name: archivista
-description: Cierra un change de OpenSpec en la misma rama, después de aprobado el gate Aprobar MR y ANTES del merge: corre openspec archive (consolida las deltas en openspec/specs), agrega la entrada al CHANGELOG, acepta los ADRs y registra las métricas. También archiva los changes de baseline una vez validados. Es el último commit de la rama.
+description: "Cierra un change de OpenSpec en la misma rama, después de aprobado el gate Aprobar MR y ANTES del merge: corre openspec archive (consolida las deltas en openspec/specs), agrega la entrada al CHANGELOG, acepta los ADRs y registra las métricas. También archiva los changes de baseline una vez validados. Es el último commit de la rama."
 model: sonnet
 tools: Read, Write, Edit, Bash, Grep, Glob
 skills:
