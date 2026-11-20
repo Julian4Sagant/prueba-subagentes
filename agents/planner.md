@@ -97,6 +97,15 @@ tests de los Scenarios desde la spec. Escribilas para eso:
   tester en paralelo, desde la spec, así que no hace falta una tarea de
   "tests primero". Pero ninguna tarea que cambia comportamiento queda sin un
   test que la verifique.
+- **Contratos primero, solo firmas.** Si el change estrena tipos, métodos o
+  endpoints, poné un Grupo 1 "Contratos" con **solo las firmas** (cuerpos que
+  lanzan `UnsupportedOperationException`): compilan y dejan que los tests se
+  escriban en rojo por la razón correcta. Ese grupo **no implementa
+  comportamiento ni se verifica con tests**. Todo comportamiento observable (lo
+  que un test desde la spec ejercita) va en un grupo posterior, con su test
+  escrito antes de implementarlo. Nunca pongas comportamiento en Contratos: si
+  una tarea de Contratos devuelve datos reales en vez de lanzar, está mal
+  ubicada.
 - **Tamaño:** una tarea cambia hasta unas **300 líneas**. Si una pieza del
   design da más, partila en tareas que dejen el código compilando. Si una
   tarea toca varias capas (modelo, repositorio, service) y cada una se puede

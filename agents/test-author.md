@@ -66,7 +66,12 @@ no lo hacés: vos solo escribís los tests de los escenarios de la tarea. No toq
    sintéticos, nunca datos reales.
 4. Corré los tests. El estado esperado es **rojo por la razón correcta**: compilan y
    fallan por `UnsupportedOperationException` (las firmas de Contratos) o por una
-   aserción, **nunca** por compilación, configuración o datos de prueba.
+   aserción, **nunca** por compilación, configuración, datos de prueba **ni por un
+   error del test mismo** (un `NullPointerException`/`ClassCastException` del armado,
+   un JsonPath mal formado, un matcher equivocado). Si el test falla por su propio
+   armado, es un defecto tuyo: arreglalo. Si el endpoint todavía no existe y el test
+   falla antes (404/405), confirmá que, una vez implementado, fallaría por la
+   aserción y no por el armado — un rojo que tapa un bug del test no es un rojo válido.
 5. Commiteá tus tests (ver "Commit").
 
 ## Reglas duras

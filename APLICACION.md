@@ -174,6 +174,10 @@ Grupo por grupo, empezando por Contratos, y tarea por tarea:
 1. **Grupo 1 (Contratos):** no lleva tests propios. Llamás directo al
    **implementador** para que escriba las **firmas** (cuerpos que lanzan
    `UnsupportedOperationException`), que compilan y quedan marcadas. Sin test-author.
+   Contratos es **solo firmas**: si una tarea del grupo implementa comportamiento
+   (devuelve datos reales) en vez de lanzar, está mal planificada — devolvela al
+   planner en vez de implementarla acá, porque su comportamiento necesita test-author
+   primero.
 2. **Cada tarea con tests:**
    - **test-author(tarea)** → escribe y commitea los tests (en rojo).
    - **implementador(tarea)** → código mínimo, verde, `[x]`, commit.
